@@ -1,0 +1,9 @@
+[package]
+name = "advent2023"
+version = "0.1.0"
+authors = ["Anisse Astier <anisse@astier.eu>"]
+edition = "2021"
+
+[dependencies]
+itertools = "0.10.5"
+#scan_fmt = "0.2.6"
