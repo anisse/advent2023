@@ -36,40 +36,56 @@ where
             println!("before: {s}");
             true
         })
-        .map(|mut s| {
-            let mut i = 0;
-            while i <= s.len() {
-                s = s[..i]
-                    .replace("one", "1")
-                    .replace("two", "2")
-                    .replace("three", "3")
-                    .replace("four", "4")
-                    .replace("five", "5")
-                    .replace("six", "6")
-                    .replace("seven", "7")
-                    .replace("eight", "8")
-                    .replace("nine", "9")
-                    + &s[i..];
-                i += 1;
-            }
-            s
-        })
-        .filter(|s| {
-            println!("after: {s}");
-            true
-        })
-        .map(|l| l.chars().filter(|c| c.is_digit(10)).collect::<String>())
-        .map(|s| {
-            [s.chars().next().unwrap(), s.chars().last().unwrap()]
-                .iter()
-                .collect()
-        })
+        .map(|s| [first_digit(&s), last_digit(&s)].iter().collect())
         .filter(|s| {
             println!("int: {s}");
             true
         })
         .map(|l: String| l.parse::<usize>().expect("not int"))
         .sum()
+}
+
+fn first_digit(s: &str) -> char {
+    let mut i = 0;
+    let mut s = s.to_string();
+    while i <= s.len() {
+        s = s[..i]
+            .replace("four", "4")
+            .replace("five", "5")
+            .replace("six", "6")
+            .replace("seven", "7")
+            .replace("nine", "9")
+            .replace("one", "1")
+            .replace("eight", "8")
+            .replace("two", "2")
+            .replace("three", "3")
+            .to_string()
+            + &s[i..];
+        i += 1;
+    }
+    s.chars().find(|c| c.is_ascii_digit()).unwrap()
+}
+fn last_digit(s: &str) -> char {
+    let mut i = s.len();
+    let mut s = s.to_string();
+    loop {
+        s = s[..i].to_string()
+            + &s[i..]
+                .replace("four", "4")
+                .replace("five", "5")
+                .replace("six", "6")
+                .replace("seven", "7")
+                .replace("nine", "9")
+                .replace("one", "1")
+                .replace("eight", "8")
+                .replace("two", "2")
+                .replace("three", "3");
+        if i == 0 {
+            break;
+        }
+        i -= 1;
+    }
+    s.chars().filter(|c| c.is_ascii_digit()).last().unwrap()
 }
 
 #[test]
