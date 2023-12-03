@@ -112,20 +112,14 @@ fn is_adjacent_gear(map: &[Vec<char>], x: usize, y: usize) -> Option<usize> {
             if yy == y as isize && yy == x as isize {
                 continue;
             }
-            if let Some((i, _)) = integer(&map[yy as usize][(xx as usize)..]) {
+            if map[yy as usize][xx as usize].is_ascii_digit() {
                 let mut intcoord = xx - 1;
-                let mut int = i as usize;
-                if intcoord >= 0 {
-                    while let Some((i, _)) = integer(&map[yy as usize][(intcoord as usize)..]) {
-                        intcoord -= 1;
-                        int = i as usize;
-                        if intcoord < 0 {
-                            break;
-                        }
-                    }
+                while intcoord >= 0 && map[yy as usize][intcoord as usize].is_ascii_digit() {
+                    intcoord -= 1;
                 }
-
-                integers.insert((intcoord, yy), int);
+                let (int, _) = integer(&map[yy as usize][((intcoord + 1) as usize)..])
+                    .expect("an integer an {intcoord}, {yy}");
+                integers.insert((intcoord, yy), int as usize);
                 /*
                 println!(
                     "part number {int} found at coord ({intcoord}, {yy}) next to gear({x}, {y})",
