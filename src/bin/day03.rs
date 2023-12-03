@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use advent2023::*;
 fn main() {
     let things = parse(input!());
@@ -72,7 +74,7 @@ fn integer(s: &[char]) -> Option<(u16, usize)> {
     if i == 0 {
         return None;
     }
-    dbg!(&s[..i]);
+    //dbg!(&s[..i]);
     return Some((
         s[..i].iter().collect::<String>().parse().expect("not int"),
         i,
@@ -83,10 +85,63 @@ fn operation2<I>(things: I) -> usize
 where
     I: Iterator<Item = ParsedItem>,
 {
-    for _ in things {
-        todo!()
+    let mut sum = 0;
+    let map: Vec<_> = things.collect();
+    for (y, line) in map.iter().enumerate() {
+        for (x, c) in line.iter().enumerate() {
+            if *c == '*' {
+                if let Some(p) = is_adjacent_gear(&map, x, y) {
+                    sum += p;
+                }
+            }
+        }
     }
-    0
+    sum
+}
+
+fn is_adjacent_gear(map: &[Vec<char>], x: usize, y: usize) -> Option<usize> {
+    let mut integers: HashMap<(isize, isize), usize> = HashMap::new();
+    for yy in (y as isize - 1)..=(y as isize + 1) {
+        for xx in (x as isize - 1)..=(x as isize + 1) {
+            // out of bounds
+            if yy < 0 || xx < 0 || yy as usize >= map.len() || xx as usize >= map[yy as usize].len()
+            {
+                continue;
+            }
+            // skip self
+            if yy == y as isize && yy == x as isize {
+                continue;
+            }
+            if let Some((i, _)) = integer(&map[yy as usize][(xx as usize)..]) {
+                let mut intcoord = xx - 1;
+                let mut int = i as usize;
+                if intcoord >= 0 {
+                    while let Some((i, _)) = integer(&map[yy as usize][(intcoord as usize)..]) {
+                        intcoord -= 1;
+                        int = i as usize;
+                        if intcoord < 0 {
+                            break;
+                        }
+                    }
+                }
+
+                integers.insert((intcoord, yy), int);
+                println!(
+                    "part number {int} found at coord ({intcoord}, {yy}) next to gear({x}, {y})",
+                );
+            }
+        }
+    }
+    if integers.len() == 2 {
+        /*
+        println!(
+            "gear at ({x}, {y}) has two adjacent integers {} and {}",
+            integers[0], integers[1],
+        );
+        */
+        return Some(integers.values().product());
+    }
+    None
 }
 
 #[test]
