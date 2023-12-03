@@ -16,14 +16,10 @@ fn operation<I>(things: I) -> usize
 where
     I: Iterator<Item = ParsedItem>,
 {
-    let mut count = 0;
     for _ in things {
-        if true {
-            count += 1
-        }
         todo!()
     }
-    count
+    42
 }
 
 fn operation2<I>(things: I) -> usize
@@ -33,7 +29,7 @@ where
     for _ in things {
         todo!()
     }
-    0
+    42
 }
 
 #[test]
