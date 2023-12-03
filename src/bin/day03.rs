@@ -37,8 +37,6 @@ where
 }
 
 fn is_adjacent_int(map: &[Vec<char>], x: usize, y: usize, lx: usize) -> bool {
-    let mut yy: isize;
-    let mut xx: isize;
     for yy in (y as isize - 1)..=(y as isize + 1) {
         for xx in (x as isize - 1)..=((x + lx) as isize) {
             // out of bounds
@@ -51,10 +49,12 @@ fn is_adjacent_int(map: &[Vec<char>], x: usize, y: usize, lx: usize) -> bool {
                 continue;
             }
             if map[yy as usize][xx as usize] != '.' {
+                /*
                 println!(
                     "part {} found at coord ({xx}, {yy}) next to int",
                     map[yy as usize][xx as usize],
                 );
+                */
                 return true;
             }
         }
@@ -126,9 +126,11 @@ fn is_adjacent_gear(map: &[Vec<char>], x: usize, y: usize) -> Option<usize> {
                 }
 
                 integers.insert((intcoord, yy), int);
+                /*
                 println!(
                     "part number {int} found at coord ({intcoord}, {yy}) next to gear({x}, {y})",
                 );
+                */
             }
         }
     }
