@@ -38,7 +38,7 @@ where
                 }
             }
         }
-        println!("Line {l:?} is worth {score}");
+        //println!("Line {l:?} is worth {score}");
         sum += score;
     }
     sum
