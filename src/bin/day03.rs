@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use advent2023::*;
 fn main() {
     let things = parse(input!());
@@ -24,7 +22,7 @@ where
     for (y, line) in map.iter().enumerate() {
         let mut x = 0;
         while x < line.len() {
-            if let Some((i, l)) = integer(&line[x..]) {
+            if let Some((i, l)) = integer(&line[x..], 0) {
                 if is_adjacent_int(&map, x, y, l) {
                     sum += i as usize;
                 }
@@ -62,22 +60,29 @@ fn is_adjacent_int(map: &[Vec<char>], x: usize, y: usize, lx: usize) -> bool {
     false
 }
 
-fn integer(s: &[char]) -> Option<(u16, usize)> {
-    let mut i = 0;
-    while i < s.len() {
-        if s[i].is_ascii_digit() {
-            i += 1
-        } else {
-            break;
-        }
-    }
-    if i == 0 {
+fn integer(s: &[char], i: usize) -> Option<(u16, usize)> {
+    let mut start = i;
+    if !s[i].is_ascii_digit() {
         return None;
     }
-    //dbg!(&s[..i]);
+    while start > 0 && s[start - 1].is_ascii_digit() {
+        start -= 1;
+    }
+    let mut end = i;
+    while end < s.len() && s[end].is_ascii_digit() {
+        end += 1
+    }
+    if start == end {
+        return None;
+    }
+    //dbg!(&s[start..end]);
     return Some((
-        s[..i].iter().collect::<String>().parse().expect("not int"),
-        i,
+        s[start..end]
+            .iter()
+            .collect::<String>()
+            .parse()
+            .expect("not int"),
+        end - i,
     ));
 }
 
@@ -89,6 +94,7 @@ where
     let map: Vec<_> = things.collect();
     for (y, line) in map.iter().enumerate() {
         for (x, c) in line.iter().enumerate() {
+            //println!("At ({x}, {y}) char = {c}");
             if *c == '*' {
                 if let Some(p) = is_adjacent_gear(&map, x, y) {
                     sum += p;
@@ -100,42 +106,44 @@ where
 }
 
 fn is_adjacent_gear(map: &[Vec<char>], x: usize, y: usize) -> Option<usize> {
-    let mut integers: HashMap<(isize, isize), usize> = HashMap::new();
+    let mut integers = vec![];
     for yy in (y as isize - 1)..=(y as isize + 1) {
-        for xx in (x as isize - 1)..=(x as isize + 1) {
+        let mut xx = x as isize - 1;
+        while xx <= x as isize + 1 {
+            //println!("Start searching at {xx}, {yy} for gear ({x}, {y})");
             // out of bounds
             if yy < 0 || xx < 0 || yy as usize >= map.len() || xx as usize >= map[yy as usize].len()
             {
+                xx += 1;
                 continue;
             }
             // skip self
-            if yy == y as isize && yy == x as isize {
+            if yy == y as isize && xx == x as isize {
+                xx += 1;
                 continue;
             }
-            if map[yy as usize][xx as usize].is_ascii_digit() {
-                let mut intcoord = xx - 1;
-                while intcoord >= 0 && map[yy as usize][intcoord as usize].is_ascii_digit() {
-                    intcoord -= 1;
-                }
-                let (int, _) = integer(&map[yy as usize][((intcoord + 1) as usize)..])
-                    .expect("an integer an {intcoord}, {yy}");
-                integers.insert((intcoord, yy), int as usize);
-                /*
-                println!(
-                    "part number {int} found at coord ({intcoord}, {yy}) next to gear({x}, {y})",
-                );
-                */
+            //println!("Searching at {xx}, {yy} for gear ({x}, {y})");
+            if let Some((int, skip)) = integer(&map[yy as usize], xx as usize) {
+                //println!("Found {int} at {xx}, {yy}; skipping {skip}");
+                integers.push(int as usize);
+                xx += skip as isize;
+                //println!("part number {int} found at coord ({xx}, {yy}) next to gear({x}, {y})",);
+            } else {
+                xx += 1;
             }
         }
     }
+    //dbg!(&integers);
     if integers.len() == 2 {
         /*
         println!(
-            "gear at ({x}, {y}) has two adjacent integers {} and {}",
-            integers[0], integers[1],
+            "gear at ({x}, {y}) has two adjacent integers {} and {}; product is {}",
+            integers[0],
+            integers[1],
+            integers.iter().product::<usize>(),
         );
         */
-        return Some(integers.values().product());
+        return Some(integers.iter().product());
     }
     None
 }
