@@ -77,13 +77,11 @@ fn map_step_range(
 ) -> (Option<Range<u64>>, Vec<Range<u64>>) {
     let mut out = vec![];
     if ranges_overlap(seed_range, map_range) {
-        let before = range_before(seed_range, map_range);
-        if !before.is_empty() {
+        if let Some(before) = range_difference_before(seed_range, map_range) {
             //println!("Adding before range {before:?}");
             out.push(before)
         }
-        let after = range_after(seed_range, map_range);
-        if !after.is_empty() {
+        if let Some(after) = range_difference_after(seed_range, map_range) {
             //println!("Adding after range {after:?}");
             out.push(after)
         }
@@ -139,28 +137,23 @@ fn operation2(seeds: &[u64], maps: &[Map]) -> u64 {
         .expect("a minimum")
 }
 
-fn range_before(keep_range1: &Range<u64>, range2: &Range<u64>) -> Range<u64> {
-    if keep_range1.start == range2.start {
-        return keep_range1.start..range2.start;
+fn range_difference_before(a: &Range<u64>, b: &Range<u64>) -> Option<Range<u64>> {
+    if a.start >= b.start {
+        None
+    } else {
+        Some(a.start..(b.start))
     }
-    if keep_range1.start < range2.start {
-        return keep_range1.start..(range2.start);
-    }
-    0..0 // TODO: Option
 }
 
-fn range_after(keep_range1: &Range<u64>, range2: &Range<u64>) -> Range<u64> {
-    if keep_range1.end == range2.end {
-        return (keep_range1.end)..range2.end;
+fn range_difference_after(a: &Range<u64>, b: &Range<u64>) -> Option<Range<u64>> {
+    if a.end <= b.end {
+        None
+    } else {
+        Some((b.end)..a.end)
     }
-    if keep_range1.end < range2.end {
-        return 0..0; // TODO: Option
-    }
-    (range2.end)..keep_range1.end
 }
 fn range_overlap(range1: &Range<u64>, range2: &Range<u64>) -> Range<u64> {
     range1.start.max(range2.start)..range1.end.min(range2.end)
-    //(range_before(range1, range2).end)..(range_after(range1, range2).start + 1)
 }
 
 fn ranges_overlap(range1: &Range<u64>, range2: &Range<u64>) -> bool {
