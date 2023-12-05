@@ -72,8 +72,8 @@ fn operation(seeds: &[u64], maps: &[Map]) -> u64 {
 }
 
 fn map_step_range(
-    map_range: &Range<u64>,
     seed_range: &Range<u64>,
+    map_range: &Range<u64>,
     dest_start: u64,
 ) -> (Option<Range<u64>>, Vec<Range<u64>>) {
     let mut out = vec![];
@@ -100,22 +100,24 @@ fn map_step_range(
 }
 fn map_step(map: &Map, seed_ranges: &[Range<u64>]) -> Vec<Range<u64>> {
     let mut out = vec![];
+    println!("===== New map step for ranges: {seed_ranges:?}");
     for r in seed_ranges.iter() {
         let mut remaining = vec![r.clone()];
         let mut next_remaining = vec![];
         for map_range in map.iter() {
             for r in remaining.iter() {
                 let m_range = map_range[SRC]..(map_range[SRC] + map_range[LEN]);
+                println!("Converting {r:?} to {m_range:?} -> {} ???", map_range[DEST]);
                 let (next, keep) = map_step_range(r, &m_range, map_range[DEST]);
                 if let Some(n) = next {
                     out.push(n)
                 }
-                next_remaining.extend(keep);
+                next_remaining.extend_from_slice(&keep);
             }
             remaining = next_remaining;
             next_remaining = Vec::new();
         }
-        out.push(r.clone());
+        out.extend_from_slice(&remaining);
     }
     out
 }
@@ -284,27 +286,28 @@ fn operation2(seeds: &[u64], maps: &[Map]) -> u64 {
 }
 */
 
-fn range_before(range1: &Range<u64>, range2: &Range<u64>) -> Range<u64> {
-    if range1.start == range2.start {
-        return range1.start..range2.start;
+fn range_before(keep_range1: &Range<u64>, range2: &Range<u64>) -> Range<u64> {
+    if keep_range1.start == range2.start {
+        return keep_range1.start..range2.start;
     }
-    if range1.start < range2.start {
-        return range1.start..(range2.start + 1);
+    if keep_range1.start < range2.start {
+        return keep_range1.start..(range2.start);
     }
-    range2.start..(range1.start + 1)
+    0..0 // TODO: Option
 }
 
-fn range_after(range1: &Range<u64>, range2: &Range<u64>) -> Range<u64> {
-    if range1.end == range2.end {
-        return range1.end..range1.end;
+fn range_after(keep_range1: &Range<u64>, range2: &Range<u64>) -> Range<u64> {
+    if keep_range1.end == range2.end {
+        return (keep_range1.end)..range2.end;
     }
-    if range1.end < range2.end {
-        return (range1.end - 1)..range2.end;
+    if keep_range1.end < range2.end {
+        return 0..0; // TODO: Option
     }
-    (range2.end - 1)..range1.end
+    (range2.end)..keep_range1.end
 }
 fn range_overlap(range1: &Range<u64>, range2: &Range<u64>) -> Range<u64> {
-    (range_before(range1, range2).end)..(range_after(range1, range2).start + 1)
+    range1.start.max(range2.start)..range1.end.min(range2.end)
+    //(range_before(range1, range2).end)..(range_after(range1, range2).start + 1)
 }
 
 fn ranges_overlap(range1: &Range<u64>, range2: &Range<u64>) -> bool {
