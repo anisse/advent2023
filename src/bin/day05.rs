@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use advent2023::*;
 fn main() {
     let (seeds, maps) = parse(input!());
@@ -54,11 +56,11 @@ fn operation(seeds: &[u64], maps: &[Map]) -> u64 {
             let mut id = *s;
             'outer: for m in maps.iter() {
                 for r in m.iter() {
-                    println!("Seed {id} testing range {} {} {}", r[DEST], r[SRC], r[LEN]);
+                    //println!("Seed {id} testing range {} {} {}", r[DEST], r[SRC], r[LEN]);
                     if r[SRC] <= id && r[SRC] + r[LEN] > id {
-                        print!("In range {} {} {}, {id} becomes ", r[DEST], r[SRC], r[LEN]);
+                        //print!("In range {} {} {}, {id} becomes ", r[DEST], r[SRC], r[LEN]);
                         id = r[DEST] + (id - r[SRC]);
-                        println!("{id}");
+                        //println!("{id}");
                         continue 'outer;
                     }
                 }
@@ -69,31 +71,247 @@ fn operation(seeds: &[u64], maps: &[Map]) -> u64 {
         .expect("a minimum")
 }
 
+fn map_step_range(
+    map_range: &Range<u64>,
+    seed_range: &Range<u64>,
+    dest_start: u64,
+) -> (Option<Range<u64>>, Vec<Range<u64>>) {
+    let mut out = vec![];
+    if ranges_overlap(seed_range, map_range) {
+        let before = range_before(seed_range, map_range);
+        if !before.is_empty() {
+            println!("Adding before range {before:?}");
+            out.push(before)
+        }
+        let after = range_after(seed_range, map_range);
+        if !after.is_empty() {
+            println!("Adding after range {after:?}");
+            out.push(after)
+        }
+        let overlap = range_overlap(seed_range, map_range);
+        let new = (dest_start + (overlap.start - map_range.start))
+            ..(dest_start + (overlap.end - map_range.start));
+        println!("Adding converted range {overlap:?} -> {new:?}");
+        return (Some(new), out);
+    }
+    println!("Keeping unmatched range {seed_range:?}");
+    out.push(seed_range.clone());
+    (None, out)
+}
+fn map_step(map: &Map, seed_ranges: &[Range<u64>]) -> Vec<Range<u64>> {
+    let mut out = vec![];
+    for r in seed_ranges.iter() {
+        let mut remaining = vec![r.clone()];
+        let mut next_remaining = vec![];
+        for map_range in map.iter() {
+            for r in remaining.iter() {
+                let m_range = map_range[SRC]..(map_range[SRC] + map_range[LEN]);
+                let (next, keep) = map_step_range(r, &m_range, map_range[DEST]);
+                if let Some(n) = next {
+                    out.push(n)
+                }
+                next_remaining.extend(keep);
+            }
+            remaining = next_remaining;
+            next_remaining = Vec::new();
+        }
+        out.push(r.clone());
+    }
+    out
+}
+
+fn operation2(seeds: &[u64], maps: &[Map]) -> u64 {
+    seeds
+        .chunks_exact(2)
+        .map(|srange| srange[SEED_SRC]..(srange[SEED_SRC] + srange[SEED_LEN]))
+        .map(|srange| vec![srange])
+        .map(|range| {
+            let mut input = range.clone();
+            maps.iter().for_each(|m| input = map_step(m, &input));
+            input
+                .iter()
+                .map(|r| r.start)
+                .min()
+                .expect("a range minimum")
+        })
+        .min()
+        .expect("a minimum")
+    /*
+    .map(|ranges|
+        srange.iter().for_each(|r| {
+            let mut next_ranges = vec![r.clone()];
+            for m in maps.iter() {
+                println!("============== New map for range {r:?}");
+                let mut remaining_range_step = next_ranges.clone();
+                let mut next_remaining_ranges = vec![];
+                for map_range in m.iter() {
+                    let m_range = map_range[SRC]..(map_range[SRC] + map_range[LEN]);
+                    println!(
+                        "==Now in map range: {}..{} dest {}..{}, iterating over {remaining_range_step:?}",
+                        map_range[SRC],
+                        map_range[SRC] + map_range[LEN],
+                        map_range[DEST],
+                        map_range[DEST] + map_range[LEN]
+                    );
+                    for r in remaining_range_step.iter() {
+                        println!(
+                            "Seeds {r:?} testing range {}..{} dest {}..{}",
+                            map_range[SRC],
+                            map_range[SRC] + map_range[LEN],
+                            map_range[DEST],
+                            map_range[DEST] + map_range[LEN]
+                        );
+                        if ranges_overlap(r, &m_range) {
+                            let before = range_before(r, &m_range);
+                            if !before.is_empty() {
+                                println!("Adding before range {before:?}");
+                                next_remaining_ranges.push(before)
+                            }
+                            let after = range_after(r, &m_range);
+                            if !after.is_empty() {
+                                println!("Adding after range {after:?}");
+                                next_remaining_ranges.push(after)
+                            }
+                            let overlap = range_overlap(r, &m_range);
+                            let new = (map_range[DEST] + (overlap.start - map_range[SRC]))
+                                ..(map_range[DEST] + (overlap.end - map_range[SRC]));
+                            println!("Adding converted range {overlap:?} -> {new:?}");
+                            next_ranges.push(new);
+                            continue;
+                        }
+                        println!("Keeping unmatched range {r:?}");
+                        next_remaining_ranges.push(r.clone());
+                    }
+                    println!("End of range, next is {next_remaining_ranges:?}");
+                    remaining_range_step = next_remaining_ranges;
+                    next_remaining_ranges = Vec::new();
+                    println!(
+                        "==End of map range: {}..{} dest {}..{}, remaining is {remaining_range_step:?}",
+                        map_range[SRC],
+                        map_range[SRC] + map_range[LEN],
+                        map_range[DEST],
+                        map_range[DEST] + map_range[LEN]
+                    );
+                }
+                next_ranges.extend(remaining_range_step);
+            }
+            ranges = next_ranges;
+        });
+        ranges
+            .iter()
+            .map(|r| r.start)
+            .min()
+            .expect("a range minimum")
+    })
+    .min()
+    .expect("a minimum")
+    */
+    //0
+}
+/*
 fn operation2(seeds: &[u64], maps: &[Map]) -> u64 {
     seeds
         .chunks_exact(2)
         .map(|srange| {
-            (srange[SEED_SRC]..(srange[SEED_SRC] + srange[SEED_LEN]))
-                .map(|s| {
-                    let mut id = s;
-                    'outer: for m in maps.iter() {
-                        for r in m.iter() {
-                            //println!("Seed {id} testing range {} {} {}", r[DEST], r[SRC], r[LEN]);
-                            if r[SRC] <= id && r[SRC] + r[LEN] > id {
-                                //print!("In range {} {} {}, {id} becomes ", r[DEST], r[SRC], r[LEN]);
-                                id = r[DEST] + (id - r[SRC]);
-                                //println!("{id}");
-                                continue 'outer;
+            let mut ranges = vec![(srange[SEED_SRC]..(srange[SEED_SRC] + srange[SEED_LEN]))];
+            srange.iter().for_each(|r| {
+                let mut next_ranges = vec![r.clone()];
+                for m in maps.iter() {
+                    println!("============== New map for range {r:?}");
+                    let mut remaining_range_step = next_ranges.clone();
+                    let mut next_remaining_ranges = vec![];
+                    for map_range in m.iter() {
+                        let m_range = map_range[SRC]..(map_range[SRC] + map_range[LEN]);
+                        println!(
+                            "==Now in map range: {}..{} dest {}..{}, iterating over {remaining_range_step:?}",
+                            map_range[SRC],
+                            map_range[SRC] + map_range[LEN],
+                            map_range[DEST],
+                            map_range[DEST] + map_range[LEN]
+                        );
+                        for r in remaining_range_step.iter() {
+                            println!(
+                                "Seeds {r:?} testing range {}..{} dest {}..{}",
+                                map_range[SRC],
+                                map_range[SRC] + map_range[LEN],
+                                map_range[DEST],
+                                map_range[DEST] + map_range[LEN]
+                            );
+                            if ranges_overlap(r, &m_range) {
+                                let before = range_before(r, &m_range);
+                                if !before.is_empty() {
+                                    println!("Adding before range {before:?}");
+                                    next_remaining_ranges.push(before)
+                                }
+                                let after = range_after(r, &m_range);
+                                if !after.is_empty() {
+                                    println!("Adding after range {after:?}");
+                                    next_remaining_ranges.push(after)
+                                }
+                                let overlap = range_overlap(r, &m_range);
+                                let new = (map_range[DEST] + (overlap.start - map_range[SRC]))
+                                    ..(map_range[DEST] + (overlap.end - map_range[SRC]));
+                                println!("Adding converted range {overlap:?} -> {new:?}");
+                                next_ranges.push(new);
+                                continue;
                             }
+                            println!("Keeping unmatched range {r:?}");
+                            next_remaining_ranges.push(r.clone());
                         }
+                        println!("End of range, next is {next_remaining_ranges:?}");
+                        remaining_range_step = next_remaining_ranges;
+                        next_remaining_ranges = Vec::new();
+                        println!(
+                            "==End of map range: {}..{} dest {}..{}, remaining is {remaining_range_step:?}",
+                            map_range[SRC],
+                            map_range[SRC] + map_range[LEN],
+                            map_range[DEST],
+                            map_range[DEST] + map_range[LEN]
+                        );
                     }
-                    id
-                })
+                    next_ranges.extend(remaining_range_step);
+                }
+                ranges = next_ranges;
+            });
+            ranges
+                .iter()
+                .map(|r| r.start)
                 .min()
-                .expect("a minimum")
+                .expect("a range minimum")
         })
         .min()
         .expect("a minimum")
+}
+*/
+
+fn range_before(range1: &Range<u64>, range2: &Range<u64>) -> Range<u64> {
+    if range1.start == range2.start {
+        return range1.start..range2.start;
+    }
+    if range1.start < range2.start {
+        return range1.start..(range2.start + 1);
+    }
+    range2.start..(range1.start + 1)
+}
+
+fn range_after(range1: &Range<u64>, range2: &Range<u64>) -> Range<u64> {
+    if range1.end == range2.end {
+        return range1.end..range1.end;
+    }
+    if range1.end < range2.end {
+        return (range1.end - 1)..range2.end;
+    }
+    (range2.end - 1)..range1.end
+}
+fn range_overlap(range1: &Range<u64>, range2: &Range<u64>) -> Range<u64> {
+    (range_before(range1, range2).end)..(range_after(range1, range2).start + 1)
+}
+
+fn ranges_overlap(range1: &Range<u64>, range2: &Range<u64>) -> bool {
+    range1.contains(&range2.start)
+        || range1.contains(&(range2.end - 1))
+        || range2.contains(&range1.start)
+        || range2.contains(&(range1.end - 1))
 }
 
 #[test]
@@ -104,5 +322,5 @@ fn test() {
     assert_eq!(res, 35);
     //part 2
     let res = operation2(&seeds, &maps);
-    assert_eq!(res, 42);
+    assert_eq!(res, 46);
 }
