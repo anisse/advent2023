@@ -125,9 +125,8 @@ fn operation2(seeds: &[u64], maps: &[Map]) -> u64 {
         .map(|srange| srange[SEED_SRC]..(srange[SEED_SRC] + srange[SEED_LEN]))
         .map(|srange| vec![srange])
         .map(|range| {
-            let mut input = range.clone();
-            maps.iter().for_each(|m| input = map_step(m, &input));
-            input
+            maps.iter()
+                .fold(range, |input, m| map_step(m, &input))
                 .iter()
                 .map(|r| r.start)
                 .min()
