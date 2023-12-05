@@ -79,34 +79,34 @@ fn map_step_range(
     if ranges_overlap(seed_range, map_range) {
         let before = range_before(seed_range, map_range);
         if !before.is_empty() {
-            println!("Adding before range {before:?}");
+            //println!("Adding before range {before:?}");
             out.push(before)
         }
         let after = range_after(seed_range, map_range);
         if !after.is_empty() {
-            println!("Adding after range {after:?}");
+            //println!("Adding after range {after:?}");
             out.push(after)
         }
         let overlap = range_overlap(seed_range, map_range);
         let new = (dest_start + (overlap.start - map_range.start))
             ..(dest_start + (overlap.end - map_range.start));
-        println!("Adding converted range {overlap:?} -> {new:?}");
+        //println!("Adding converted range {overlap:?} -> {new:?}");
         return (Some(new), out);
     }
-    println!("Keeping unmatched range {seed_range:?}");
+    //println!("Keeping unmatched range {seed_range:?}");
     out.push(seed_range.clone());
     (None, out)
 }
 fn map_step(map: &Map, seed_ranges: &[Range<u64>]) -> Vec<Range<u64>> {
     let mut out = vec![];
-    println!("===== New map step for ranges: {seed_ranges:?}");
+    //println!("===== New map step for ranges: {seed_ranges:?}");
     for r in seed_ranges.iter() {
         let mut remaining = vec![r.clone()];
         let mut next_remaining = vec![];
         for map_range in map.iter() {
             for r in remaining.iter() {
                 let m_range = map_range[SRC]..(map_range[SRC] + map_range[LEN]);
-                println!("Converting {r:?} to {m_range:?} -> {} ???", map_range[DEST]);
+                //println!("Converting {r:?} to {m_range:?} -> {} ???", map_range[DEST]);
                 let (next, keep) = map_step_range(r, &m_range, map_range[DEST]);
                 if let Some(n) = next {
                     out.push(n)
