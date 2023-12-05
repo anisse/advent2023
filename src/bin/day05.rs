@@ -15,6 +15,9 @@ const DEST: usize = 0;
 const SRC: usize = 1;
 const LEN: usize = 2;
 
+const SEED_SRC: usize = 0;
+const SEED_LEN: usize = 1;
+
 fn parse(input: &str) -> (Vec<u64>, Vec<Map>) {
     let seeds = input
         .lines()
@@ -66,13 +69,31 @@ fn operation(seeds: &[u64], maps: &[Map]) -> u64 {
         .expect("a minimum")
 }
 
-fn operation2(seeds: &[u64], maps: &[Map]) -> usize {
-    /*
-    for _ in things {
-        todo!()
-    }
-    */
-    42
+fn operation2(seeds: &[u64], maps: &[Map]) -> u64 {
+    seeds
+        .chunks_exact(2)
+        .map(|srange| {
+            (srange[SEED_SRC]..(srange[SEED_SRC] + srange[SEED_LEN]))
+                .map(|s| {
+                    let mut id = s;
+                    'outer: for m in maps.iter() {
+                        for r in m.iter() {
+                            //println!("Seed {id} testing range {} {} {}", r[DEST], r[SRC], r[LEN]);
+                            if r[SRC] <= id && r[SRC] + r[LEN] > id {
+                                //print!("In range {} {} {}, {id} becomes ", r[DEST], r[SRC], r[LEN]);
+                                id = r[DEST] + (id - r[SRC]);
+                                //println!("{id}");
+                                continue 'outer;
+                            }
+                        }
+                    }
+                    id
+                })
+                .min()
+                .expect("a minimum")
+        })
+        .min()
+        .expect("a minimum")
 }
 
 #[test]
