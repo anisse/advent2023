@@ -96,27 +96,29 @@ fn map_step_range(
     (None, out)
 }
 fn map_step(map: &Map, seed_ranges: &[Range<u64>]) -> Vec<Range<u64>> {
-    let mut out = vec![];
     //println!("===== New map step for ranges: {seed_ranges:?}");
-    for r in seed_ranges.iter() {
-        let mut remaining = vec![r.clone()];
-        let mut next_remaining = vec![];
-        for map_range in map.iter() {
-            for r in remaining.iter() {
-                let m_range = map_range[SRC]..(map_range[SRC] + map_range[LEN]);
-                //println!("Converting {r:?} to {m_range:?} -> {} ???", map_range[DEST]);
-                let (next, keep) = map_step_range(r, &m_range, map_range[DEST]);
-                if let Some(n) = next {
-                    out.push(n)
-                }
-                next_remaining.extend_from_slice(&keep);
-            }
-            remaining = next_remaining;
-            next_remaining = Vec::new();
-        }
-        out.extend_from_slice(&remaining);
-    }
-    out
+    seed_ranges
+        .iter()
+        .flat_map(|r| {
+            let mut out = vec![];
+            let rem = map.iter().fold(vec![r.clone()], |remaining, map_range| {
+                remaining
+                    .iter()
+                    .flat_map(|r| {
+                        let m_range = map_range[SRC]..(map_range[SRC] + map_range[LEN]);
+                        //println!("Converting {r:?} to {m_range:?} -> {} ???", map_range[DEST]);
+                        let (next, keep) = map_step_range(r, &m_range, map_range[DEST]);
+                        if let Some(n) = next {
+                            out.push(n)
+                        }
+                        keep
+                    })
+                    .collect()
+            });
+            [out, rem]
+        })
+        .flatten()
+        .collect()
 }
 
 fn operation2(seeds: &[u64], maps: &[Map]) -> u64 {
