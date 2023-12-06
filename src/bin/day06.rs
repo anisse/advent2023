@@ -33,8 +33,20 @@ fn operation(t: &[u64], d: &[u64]) -> usize {
 }
 
 fn operation2(t: &[u64], d: &[u64]) -> usize {
-    let time: usize = 47847467;
-    let distance: usize = 207139412091014;
+    let time: usize = t
+        .iter()
+        .map(|x| x.to_string())
+        .reduce(|acc, x| acc + &x)
+        .unwrap()
+        .parse()
+        .unwrap();
+    let distance: usize = d
+        .iter()
+        .map(|x| x.to_string())
+        .reduce(|acc, x| acc + &x)
+        .unwrap()
+        .parse()
+        .unwrap();
     (1..time)
         .map(|hold| (time - hold) * hold)
         .filter(|d| d > &distance)
