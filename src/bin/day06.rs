@@ -58,8 +58,8 @@ fn test() {
     let (t, d) = parse(sample!());
     //part 1
     let res = operation(&t, &d);
-    assert_eq!(res, 42);
+    assert_eq!(res, 288);
     //part 2
-    let res = operation(&t, &d);
-    assert_eq!(res, 42);
+    let res = operation2(&t, &d);
+    assert_eq!(res, 71503);
 }
