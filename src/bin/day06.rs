@@ -47,10 +47,16 @@ fn operation2(t: &[u64], d: &[u64]) -> usize {
         .unwrap()
         .parse()
         .unwrap();
-    (1..time)
-        .map(|hold| (time - hold) * hold)
-        .filter(|d| d > &distance)
-        .count()
+    // Let's find when this equation is positive:
+    // y = -x^2 + time * x - distance
+    // https://en.wikipedia.org/wiki/Quadratic_equation#Discriminant
+    let a: f64 = -1.0;
+    let b: f64 = time as f64;
+    let c: f64 = -(distance as f64);
+    let s_delta = (b * b - 4.0 * a * c).sqrt();
+    let x1 = (-b + s_delta) / (2.0 * a);
+    let x2 = (-b - s_delta) / (2.0 * a);
+    x2 as usize - x1 as usize
 }
 
 #[test]
