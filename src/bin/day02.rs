@@ -3,10 +3,10 @@ fn main() {
     let things = parse(input!());
     //dbg!(things.clone().collect::<Vec<_>>());
     //part 1
-    let res = operation(things.clone());
+    let res = part1(things.clone());
     println!("Part 1: {}", res);
     //part 2
-    let res = operation2(things);
+    let res = part2(things);
     println!("Part 2: {}", res);
 }
 type Game = Vec<Cubes>;
@@ -43,7 +43,7 @@ fn parse(input: &str) -> impl Iterator<Item = ParsedItem> + Clone + '_ {
             .collect()
     })
 }
-fn operation<I>(games: I) -> usize
+fn part1<I>(games: I) -> usize
 where
     I: Iterator<Item = ParsedItem>,
 {
@@ -61,7 +61,7 @@ where
         .sum()
 }
 
-fn operation2<I>(games: I) -> usize
+fn part2<I>(games: I) -> usize
 where
     I: Iterator<Item = ParsedItem>,
 {
@@ -85,9 +85,9 @@ where
 fn test() {
     let things = parse(sample!());
     //part 1
-    let res = operation(things.clone());
+    let res = part1(things.clone());
     assert_eq!(res, 8);
     //part 2
-    let res = operation2(things);
+    let res = part2(things);
     assert_eq!(res, 2286);
 }

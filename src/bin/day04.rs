@@ -2,10 +2,10 @@ use advent2023::*;
 fn main() {
     let (cards, sep) = parse(input!());
     //part 1
-    let res = operation(cards.clone(), sep);
+    let res = part1(cards.clone(), sep);
     println!("Part 1: {}", res);
     //part 2
-    let res = operation2(cards, sep);
+    let res = part2(cards, sep);
     println!("Part 2: {}", res);
 }
 type ParsedItem = Vec<u8>;
@@ -27,7 +27,7 @@ fn parse(input: &str) -> (impl Iterator<Item = ParsedItem> + Clone + '_, usize) 
         sep - 2, // we did skip the first two fields, so take that into account
     )
 }
-fn operation<I>(things: I, sep: usize) -> usize
+fn part1<I>(things: I, sep: usize) -> usize
 where
     I: Iterator<Item = ParsedItem>,
 {
@@ -53,7 +53,7 @@ where
     sum
 }
 
-fn operation2<I>(things: I, sep: usize) -> usize
+fn part2<I>(things: I, sep: usize) -> usize
 where
     I: Iterator<Item = ParsedItem>,
 {
@@ -82,9 +82,9 @@ where
 fn test() {
     let (cards, sep) = parse(sample!());
     //part 1
-    let res = operation(cards.clone(), sep);
+    let res = part1(cards.clone(), sep);
     assert_eq!(res, 13);
     //part 2
-    let res = operation2(cards, sep);
+    let res = part2(cards, sep);
     assert_eq!(res, 30);
 }

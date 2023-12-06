@@ -2,10 +2,10 @@ use advent2023::*;
 fn main() {
     let (t, d) = parse(input!());
     //part 1
-    let res = operation(&t, &d);
+    let res = part1(&t, &d);
     println!("Part 1: {}", res);
     //part 2
-    let res = operation2(&t, &d);
+    let res = part2(&t, &d);
     println!("Part 2: {}", res);
 }
 fn parse(input: &str) -> (Vec<u64>, Vec<u64>) {
@@ -20,7 +20,7 @@ fn parse(input: &str) -> (Vec<u64>, Vec<u64>) {
         .collect();
     (td[0].clone(), td[1].clone())
 }
-fn operation(t: &[u64], d: &[u64]) -> usize {
+fn part1(t: &[u64], d: &[u64]) -> usize {
     t.iter()
         .zip(d.iter())
         .map(|(time, distance)| {
@@ -32,7 +32,7 @@ fn operation(t: &[u64], d: &[u64]) -> usize {
         .product()
 }
 
-fn operation2(t: &[u64], d: &[u64]) -> usize {
+fn part2(t: &[u64], d: &[u64]) -> usize {
     let time: usize = t
         .iter()
         .map(|x| x.to_string())
@@ -63,9 +63,9 @@ fn operation2(t: &[u64], d: &[u64]) -> usize {
 fn test() {
     let (t, d) = parse(sample!());
     //part 1
-    let res = operation(&t, &d);
+    let res = part1(&t, &d);
     assert_eq!(res, 288);
     //part 2
-    let res = operation2(&t, &d);
+    let res = part2(&t, &d);
     assert_eq!(res, 71503);
 }

@@ -4,10 +4,10 @@ use advent2023::*;
 fn main() {
     let (seeds, maps) = parse(input!());
     //part 1
-    let res = operation(&seeds, &maps);
+    let res = part1(&seeds, &maps);
     println!("Part 1: {}", res);
     //part 2
-    let res = operation2(&seeds, &maps);
+    let res = part2(&seeds, &maps);
     println!("Part 2: {}", res);
 }
 type Map = Vec<Vec<u64>>;
@@ -48,7 +48,7 @@ fn parse(input: &str) -> (Vec<u64>, Vec<Map>) {
             .collect(),
     )
 }
-fn operation(seeds: &[u64], maps: &[Map]) -> u64 {
+fn part1(seeds: &[u64], maps: &[Map]) -> u64 {
     seeds
         .iter()
         .map(|s| {
@@ -121,7 +121,7 @@ fn map_step(map: &Map, seed_ranges: &[Range<u64>]) -> Vec<Range<u64>> {
         .collect()
 }
 
-fn operation2(seeds: &[u64], maps: &[Map]) -> u64 {
+fn part2(seeds: &[u64], maps: &[Map]) -> u64 {
     seeds
         .chunks_exact(2)
         .map(|srange| srange[SEED_SRC]..(srange[SEED_SRC] + srange[SEED_LEN]))
@@ -168,9 +168,9 @@ fn ranges_overlap(range1: &Range<u64>, range2: &Range<u64>) -> bool {
 fn test() {
     let (seeds, maps) = parse(sample!());
     //part 1
-    let res = operation(&seeds, &maps);
+    let res = part1(&seeds, &maps);
     assert_eq!(res, 35);
     //part 2
-    let res = operation2(&seeds, &maps);
+    let res = part2(&seeds, &maps);
     assert_eq!(res, 46);
 }

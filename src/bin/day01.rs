@@ -2,17 +2,17 @@ use advent2023::*;
 fn main() {
     let things = parse(input!());
     //part 1
-    let res = operation(things.clone());
+    let res = part1(things.clone());
     println!("Part 1: {}", res);
     //part 2
-    let res = operation2(things);
+    let res = part2(things);
     println!("Part 2: {}", res);
 }
 type ParsedItem = String;
 fn parse(input: &str) -> impl Iterator<Item = ParsedItem> + Clone + '_ {
     input.lines().map(|x| x.to_string())
 }
-fn operation<I>(things: I) -> usize
+fn part1<I>(things: I) -> usize
 where
     I: Iterator<Item = ParsedItem>,
 {
@@ -27,7 +27,7 @@ where
         .sum()
 }
 
-fn operation2<I>(things: I) -> usize
+fn part2<I>(things: I) -> usize
 where
     I: Iterator<Item = ParsedItem>,
 {
@@ -87,9 +87,9 @@ fn replace_digits(s: &str) -> String {
 fn test() {
     let things = parse(sample!());
     //part 1
-    //let res = operation(things.clone());
+    //let res = part1(things.clone());
     //assert_eq!(res, 42);
     //part 2
-    let res = operation2(things);
+    let res = part2(things);
     assert_eq!(res, 281);
 }
