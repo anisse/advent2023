@@ -32,31 +32,22 @@ where
     I: Iterator<Item = ParsedItem>,
 {
     hands
-        .sorted_by(|(a, _), (b, _)| compare_hands(b, a))
+        .map(|(a, score)| {
+            let k = card_kind(&a);
+            ((a, k), score)
+        })
+        .sorted_by(|(a, _), (b, _)| compare_hands(CARD_ORDER, b, a))
         //.inspect(|a| println!("{a:?}"))
         .enumerate()
         .map(|(i, (_, score))| score as usize * (i + 1))
         .sum()
 }
 
-//const CARD_ORDER: &str = "AKQJT98765432";
 const CARD_ORDER: &str = "23456789TJQKA";
-const CARD_ORDER2: &str = "J23456789TQKA";
-fn order_dict() -> HashMap<char, usize> {
-    CARD_ORDER
-        .chars()
-        .enumerate()
-        .map(|(i, c)| (c, i))
-        .collect()
+const CARD_ORDER_J: &str = "J23456789TQKA";
+fn order_map(order: &str) -> HashMap<char, usize> {
+    order.chars().enumerate().map(|(i, c)| (c, i)).collect()
 }
-fn order_dict2() -> HashMap<char, usize> {
-    CARD_ORDER2
-        .chars()
-        .enumerate()
-        .map(|(i, c)| (c, i))
-        .collect()
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(usize)]
 enum Kind {
@@ -74,36 +65,17 @@ impl From<&Kind> for usize {
     }
 }
 
-fn compare_hands(a: &String, b: &String) -> std::cmp::Ordering {
-    let ka = card_kind(a);
-    let kb = card_kind(b);
-    let cmp = ka.cmp(&kb);
-    let order = order_dict();
-    if Ordering::Equal == cmp {
-        /*
-        println!(
-            "{a} vs {b}: {ka:?} and {kb:?} are equal, second ordering is {:?}",
-            second_order(&order, b, a)
-        );
-        */
-        return second_order(&order, b, a);
+fn compare_hands(order: &str, a: &(String, Kind), b: &(String, Kind)) -> std::cmp::Ordering {
+    if a.1 != b.1 {
+        return a.1.cmp(&b.1);
     }
-    cmp
-}
-
-fn compare_hands2(a: &(String, Kind), b: &(String, Kind)) -> std::cmp::Ordering {
-    let order = order_dict2();
-    let cmp = a.1.cmp(&b.1);
-    if Ordering::Equal == cmp {
-        /*
-        println!(
-            "{a:?} and {b:?} are equal, second ordering is {:?}",
-            second_order(&order, &b.0, &a.0)
-        );
-        */
-        return second_order(&order, &b.0, &a.0);
-    }
-    cmp
+    /*
+    println!(
+        "{a:?} and {b:?} are equal, second ordering is {:?}",
+        second_order(&order, &b.0, &a.0)
+    );
+    */
+    second_order(&order_map(order), &b.0, &a.0)
 }
 
 fn second_order(order: &HashMap<char, usize>, a: &str, b: &str) -> std::cmp::Ordering {
@@ -117,16 +89,13 @@ fn second_order(order: &HashMap<char, usize>, a: &str, b: &str) -> std::cmp::Ord
 
 fn card_kind(s: &str) -> Kind {
     let cards = s.chars().counts();
-    let mut current_card = '0';
     let mut current_count = 0;
-    let order = order_dict();
     for (i, (card, card_count)) in cards
         .iter()
         .sorted_by(|(_, c1), (_, c2)| c2.cmp(c1))
         .enumerate()
     {
         if i == 0 {
-            current_card = *card;
             current_count = *card_count;
             continue;
         }
@@ -139,10 +108,6 @@ fn card_kind(s: &str) -> Kind {
         if current_count == 2 {
             return Kind::TwoPair;
         }
-        if order[&current_card] < order[card] && current_count != 2 {
-            continue;
-        }
-        current_card = *card;
         current_count = *card_count;
     }
     match current_count {
@@ -172,7 +137,7 @@ where
             let k = highest_kind(&a);
             ((a, k), score)
         })
-        .sorted_by(|(a, _), (b, _)| compare_hands2(b, a))
+        .sorted_by(|(a, _), (b, _)| compare_hands(CARD_ORDER_J, b, a))
         //.inspect(|a| println!("{a:?}"))
         .enumerate()
         .map(|(i, (_, score))| score as usize * (i + 1))
