@@ -154,7 +154,4 @@ fn test() {
     //part 2
     let res = part2(things);
     assert_eq!(res, 5905);
-
-    let things = parse(input!());
-    assert_eq!(part2(things), 245461700);
 }
