@@ -57,73 +57,20 @@ fn order_dict2() -> HashMap<char, usize> {
         .collect()
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(usize)]
 enum Kind {
-    Five(char),
-    Four(char),
-    Full(char, char),
-    Three(char),
-    TwoPair(char, char),
-    OnePair(char),
-    High(char),
+    Five,
+    Four,
+    Full,
+    Three,
+    TwoPair,
+    OnePair,
+    High,
 }
 impl From<&Kind> for usize {
     fn from(val: &Kind) -> Self {
-        match val {
-            Kind::Five(_) => 0,
-            Kind::Four(_) => 1,
-            Kind::Full(_, _) => 2,
-            Kind::Three(_) => 3,
-            Kind::TwoPair(_, _) => 4,
-            Kind::OnePair(_) => 5,
-            Kind::High(_) => 6,
-        }
-    }
-}
-impl Ord for Kind {
-    fn cmp(&self, other: &Self) -> Ordering {
-        let s: usize = self.into();
-        //if s != other.into() {
-        return s.cmp(&other.into());
-        //}
-        /*
-        let order = order_dict();
-        match (self, other) {
-            (Kind::Five(c1), Kind::Five(c2))
-            | (Kind::Four(c1), Kind::Four(c2))
-            | (Kind::Three(c1), Kind::Three(c2))
-            | (Kind::OnePair(c1), Kind::OnePair(c2))
-            | (Kind::High(c1), Kind::High(c2)) => order[c1].cmp(&order[c2]),
-            (Kind::Full(s1, s2), Kind::Full(o1, o2))
-            | (Kind::TwoPair(s1, s2), Kind::TwoPair(o1, o2)) => {
-                println!("Comparing ({s1}, {s2}) with ({o1}, {o2})");
-                if s1 != o1 {
-                    return order[s1].cmp(&order[o1]);
-                }
-                if s2 != o2 {
-                    return order[s2].cmp(&order[o2]);
-                }
-                Ordering::Equal
-            }
-            _ => unreachable!(),
-        }
-        */
-    }
-}
-
-/*
-#[test]
-fn ord_correct() {
-    assert_eq!(
-        card_kind("KK677").cmp(&card_kind("KTJJT")),
-        Ordering::Greater
-    )
-}
-*/
-
-impl PartialOrd for Kind {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
+        *val as usize
     }
 }
 
@@ -155,19 +102,6 @@ fn compare_hands2(a: &(String, Kind), b: &(String, Kind)) -> std::cmp::Ordering 
     cmp
 }
 
-fn max(order: &HashMap<char, usize>, c1: char, c2: char) -> char {
-    if order[&c1] < order[&c2] {
-        return c1;
-    }
-    c2
-}
-fn min(order: &HashMap<char, usize>, c1: char, c2: char) -> char {
-    if order[&c1] > order[&c2] {
-        return c1;
-    }
-    c2
-}
-
 fn second_order(order: &HashMap<char, usize>, a: &str, b: &str) -> std::cmp::Ordering {
     for (a, b) in a.chars().zip(b.chars()) {
         if order[&a] != order[&b] {
@@ -193,16 +127,13 @@ fn card_kind(s: &str) -> Kind {
             continue;
         }
         if current_count == 3 && *card_count == 2 {
-            return Kind::Full(current_card, *card);
+            return Kind::Full;
         }
         if *card_count < current_count {
             break;
         }
         if current_count == 2 {
-            return Kind::TwoPair(
-                min(&order, current_card, *card),
-                max(&order, current_card, *card),
-            );
+            return Kind::TwoPair;
         }
         if order[&current_card] < order[card] && current_count != 2 {
             continue;
@@ -211,11 +142,11 @@ fn card_kind(s: &str) -> Kind {
         current_count = *card_count;
     }
     match current_count {
-        5 => Kind::Five(current_card),
-        4 => Kind::Four(current_card),
-        3 => Kind::Three(current_card),
-        2 => Kind::OnePair(current_card),
-        1 => Kind::High(current_card),
+        5 => Kind::Five,
+        4 => Kind::Four,
+        3 => Kind::Three,
+        2 => Kind::OnePair,
+        1 => Kind::High,
         _ => unreachable!(),
     }
 }
