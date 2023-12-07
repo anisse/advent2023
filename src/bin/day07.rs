@@ -41,8 +41,16 @@ where
 
 //const CARD_ORDER: &str = "AKQJT98765432";
 const CARD_ORDER: &str = "23456789TJQKA";
+const CARD_ORDER2: &str = "J23456789TQKA";
 fn order_dict() -> HashMap<char, usize> {
     CARD_ORDER
+        .chars()
+        .enumerate()
+        .map(|(i, c)| (c, i))
+        .collect()
+}
+fn order_dict2() -> HashMap<char, usize> {
+    CARD_ORDER2
         .chars()
         .enumerate()
         .map(|(i, c)| (c, i))
@@ -123,12 +131,26 @@ fn compare_hands(a: &String, b: &String) -> std::cmp::Ordering {
     let ka = card_kind(a);
     let kb = card_kind(b);
     let cmp = ka.cmp(&kb);
+    let order = order_dict();
     if Ordering::Equal == cmp {
         println!(
             "{a} vs {b}: {ka:?} and {kb:?} are equal, second ordering is {:?}",
-            second_order(b, a)
+            second_order(&order, b, a)
         );
-        return second_order(b, a);
+        return second_order(&order, b, a);
+    }
+    cmp
+}
+
+fn compare_hands2(a: &(String, Kind), b: &(String, Kind)) -> std::cmp::Ordering {
+    let order = order_dict2();
+    let cmp = a.1.cmp(&b.1);
+    if Ordering::Equal == cmp {
+        println!(
+            "{a:?} and {b:?} are equal, second ordering is {:?}",
+            second_order(&order, &b.0, &a.0)
+        );
+        return second_order(&order, &b.0, &a.0);
     }
     cmp
 }
@@ -146,8 +168,7 @@ fn min(order: &HashMap<char, usize>, c1: char, c2: char) -> char {
     c2
 }
 
-fn second_order(a: &str, b: &str) -> std::cmp::Ordering {
-    let order = order_dict();
+fn second_order(order: &HashMap<char, usize>, a: &str, b: &str) -> std::cmp::Ordering {
     for (a, b) in a.chars().zip(b.chars()) {
         if order[&a] != order[&b] {
             return order[&a].cmp(&order[&b]);
@@ -199,14 +220,28 @@ fn card_kind(s: &str) -> Kind {
     }
 }
 
-fn part2<I>(things: I) -> usize
+fn highest_kind(s: &str) -> Kind {
+    CARD_ORDER
+        .chars()
+        .map(|j| card_kind(&s.replace('J', &j.to_string())))
+        .min()
+        .expect("a max")
+}
+
+fn part2<I>(hands: I) -> usize
 where
     I: Iterator<Item = ParsedItem>,
 {
-    for _ in things {
-        todo!()
-    }
-    42
+    hands
+        .map(|(a, score)| {
+            let k = highest_kind(&a);
+            ((a, k), score)
+        })
+        .sorted_by(|(a, _), (b, _)| compare_hands2(b, a))
+        .inspect(|a| println!("{a:?}"))
+        .enumerate()
+        .map(|(i, (_, score))| score as usize * (i + 1))
+        .sum()
 }
 
 #[test]
@@ -217,5 +252,5 @@ fn test() {
     assert_eq!(res, 6440);
     //part 2
     let res = part2(things);
-    assert_eq!(res, 42);
+    assert_eq!(res, 5905);
 }
