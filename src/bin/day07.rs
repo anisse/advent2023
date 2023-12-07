@@ -90,9 +90,10 @@ fn second_order(order: &HashMap<char, usize>, a: &str, b: &str) -> std::cmp::Ord
 fn card_kind(s: &str) -> Kind {
     let cards = s.chars().counts();
     let mut current_count = 0;
-    for (i, (card, card_count)) in cards
-        .iter()
-        .sorted_by(|(_, c1), (_, c2)| c2.cmp(c1))
+    // TODO. use reduce instead
+    for (i, card_count) in cards
+        .values()
+        .sorted_unstable_by(|c1, c2| c2.cmp(c1)) //reverse order
         .enumerate()
     {
         if i == 0 {
