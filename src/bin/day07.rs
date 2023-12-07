@@ -33,7 +33,7 @@ where
 {
     hands
         .sorted_by(|(a, _), (b, _)| compare_hands(b, a))
-        .inspect(|a| println!("{a:?}"))
+        //.inspect(|a| println!("{a:?}"))
         .enumerate()
         .map(|(i, (_, score))| score as usize * (i + 1))
         .sum()
@@ -80,10 +80,12 @@ fn compare_hands(a: &String, b: &String) -> std::cmp::Ordering {
     let cmp = ka.cmp(&kb);
     let order = order_dict();
     if Ordering::Equal == cmp {
+        /*
         println!(
             "{a} vs {b}: {ka:?} and {kb:?} are equal, second ordering is {:?}",
             second_order(&order, b, a)
         );
+        */
         return second_order(&order, b, a);
     }
     cmp
@@ -93,10 +95,12 @@ fn compare_hands2(a: &(String, Kind), b: &(String, Kind)) -> std::cmp::Ordering 
     let order = order_dict2();
     let cmp = a.1.cmp(&b.1);
     if Ordering::Equal == cmp {
+        /*
         println!(
             "{a:?} and {b:?} are equal, second ordering is {:?}",
             second_order(&order, &b.0, &a.0)
         );
+        */
         return second_order(&order, &b.0, &a.0);
     }
     cmp
@@ -169,7 +173,7 @@ where
             ((a, k), score)
         })
         .sorted_by(|(a, _), (b, _)| compare_hands2(b, a))
-        .inspect(|a| println!("{a:?}"))
+        //.inspect(|a| println!("{a:?}"))
         .enumerate()
         .map(|(i, (_, score))| score as usize * (i + 1))
         .sum()
@@ -184,4 +188,7 @@ fn test() {
     //part 2
     let res = part2(things);
     assert_eq!(res, 5905);
+
+    let things = parse(input!());
+    assert_eq!(part2(things), 245461700);
 }
