@@ -28,3 +28,12 @@ macro_rules! input {
 pub fn space_indent(recursion_level: u8, max: u8) {
     (0..(max - recursion_level)).for_each(|_| print! {" "});
 }
+
+pub fn ints<I, T>(s: &str) -> impl Iterator<Item = T> + Clone + '_
+where
+    T: std::str::FromStr,
+    <T as std::str::FromStr>::Err: std::fmt::Debug,
+{
+    s.split(|c: char| !c.is_ascii_digit())
+        .map(|x| x.parse::<T>().expect("an int"))
+}
