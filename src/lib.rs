@@ -29,11 +29,19 @@ pub fn space_indent(recursion_level: u8, max: u8) {
     (0..(max - recursion_level)).for_each(|_| print! {" "});
 }
 
-pub fn ints<I, T>(s: &str) -> impl Iterator<Item = T> + Clone + '_
+pub fn ints<T>(s: &str) -> impl Iterator<Item = T> + Clone + '_
 where
     T: std::str::FromStr,
     <T as std::str::FromStr>::Err: std::fmt::Debug,
 {
     s.split(|c: char| !c.is_ascii_digit())
+        .filter(|x| !x.is_empty())
         .map(|x| x.parse::<T>().expect("an int"))
+}
+#[test]
+fn ints_test() {
+    assert_eq!(
+        ints("Hello 1: 42,3874 384|81  1").collect::<Vec<u16>>(),
+        vec![1, 42, 3874, 384, 81, 1],
+    );
 }
