@@ -75,8 +75,12 @@ fn part2(ins: &[Ins], map: &HashMap<&str, LR>) -> usize {
                 }
             }
         })
-        .reduce(|lcm, a| lcm * a / gcd(lcm, a))
+        .reduce(lcm)
         .expect("an lcm")
+}
+
+fn lcm(a: usize, b: usize) -> usize {
+    a * b / gcd(a, b)
 }
 
 fn gcd(mut a: usize, mut b: usize) -> usize {
