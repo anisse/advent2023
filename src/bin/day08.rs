@@ -72,28 +72,23 @@ fn part2(ins: &[Ins], map: &HashMap<String, LR>) -> usize {
         .cloned()
         .collect();
     //dbg!(&currents);
-    let mut i_time: Vec<usize> = vec![];
-    for start in currents {
-        let mut current = start.clone();
-        let mut i = 0;
-        loop {
-            current = match ins[i % ins.len()] {
-                Ins::L => map[&current].left.clone(),
-                Ins::R => map[&current].right.clone(),
-            };
-            i += 1;
-            if current.chars().last().expect("last Z") == 'Z' {
-                i_time.push(i);
-                break;
+    currents
+        .iter()
+        .map(|start| {
+            let mut current = start.clone();
+            let mut i = 0;
+            loop {
+                current = match ins[i % ins.len()] {
+                    Ins::L => map[&current].left.clone(),
+                    Ins::R => map[&current].right.clone(),
+                };
+                i += 1;
+                if current.chars().last().expect("last Z") == 'Z' {
+                    break;
+                }
             }
-        }
-    }
-    lcm(&i_time)
-}
-
-fn lcm(iv: &[usize]) -> usize {
-    iv.iter()
-        .cloned()
+            i
+        })
         .reduce(|lcm, a| lcm * a / gcd(lcm, a))
         .expect("an lcm")
 }
