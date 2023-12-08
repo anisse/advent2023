@@ -71,10 +71,10 @@ fn part2(ins: &[Ins], map: &HashMap<String, LR>) -> usize {
         .filter(|s| s.chars().last().expect("last A") == 'A')
         .cloned()
         .collect();
-    dbg!(&currents);
+    //dbg!(&currents);
     let mut i_time: Vec<usize> = vec![];
-    for j in 0..currents.len() {
-        let mut current = currents[j].clone();
+    for start in currents {
+        let mut current = start.clone();
         let mut i = 0;
         loop {
             current = match ins[i % ins.len()] {
