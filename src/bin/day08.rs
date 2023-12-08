@@ -10,9 +10,9 @@ fn main() {
     let res = part2(&ins, &map);
     println!("Part 2: {}", res);
 }
-struct LR {
-    left: String,
-    right: String,
+struct LR<'a> {
+    left: &'a str,
+    right: &'a str,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -21,7 +21,7 @@ enum Ins {
     R,
 }
 
-fn parse(input: &str) -> (Vec<Ins>, HashMap<String, LR>) {
+fn parse(input: &str) -> (Vec<Ins>, HashMap<&str, LR>) {
     let mut i = input.lines();
     (
         i.next()
@@ -38,24 +38,18 @@ fn parse(input: &str) -> (Vec<Ins>, HashMap<String, LR>) {
                 let (a, rest) = l.split_at(3);
                 let (l, rest) = rest.split_at(4).1.split_at(3);
                 let (r, _) = rest.split_at(2).1.split_at(3);
-                (
-                    a.to_string(),
-                    LR {
-                        left: l.to_string(),
-                        right: r.to_string(),
-                    },
-                )
+                (a, LR { left: l, right: r })
             })
             .collect(),
     )
 }
-fn part1(ins: &[Ins], map: &HashMap<String, LR>) -> usize {
+fn part1(ins: &[Ins], map: &HashMap<&str, LR>) -> usize {
     let mut i = 0;
-    let mut current = "AAA".to_string();
+    let mut current = "AAA";
     loop {
         current = match ins[i % ins.len()] {
-            Ins::L => map[&current].left.clone(),
-            Ins::R => map[&current].right.clone(),
+            Ins::L => map[current].left,
+            Ins::R => map[current].right,
         };
         i += 1;
         if current == "ZZZ" {
@@ -64,16 +58,16 @@ fn part1(ins: &[Ins], map: &HashMap<String, LR>) -> usize {
     }
 }
 
-fn part2(ins: &[Ins], map: &HashMap<String, LR>) -> usize {
+fn part2(ins: &[Ins], map: &HashMap<&str, LR>) -> usize {
     map.keys()
         .filter(|s| s.chars().last().expect("last A") == 'A')
         .map(|start| {
-            let mut current = start.clone();
+            let mut current: &str = start;
             let mut i = 0;
             loop {
                 current = match ins[i % ins.len()] {
-                    Ins::L => map[&current].left.clone(),
-                    Ins::R => map[&current].right.clone(),
+                    Ins::L => &map[&current].left,
+                    Ins::R => &map[&current].right,
                 };
                 i += 1;
                 if current.chars().last().expect("last Z") == 'Z' {
