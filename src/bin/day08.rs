@@ -59,21 +59,14 @@ fn part1(ins: &[Ins], map: &HashMap<String, LR>) -> usize {
         };
         i += 1;
         if current == "ZZZ" {
-            break;
+            return i;
         }
     }
-    i
 }
 
 fn part2(ins: &[Ins], map: &HashMap<String, LR>) -> usize {
-    let currents: Vec<String> = map
-        .keys()
+    map.keys()
         .filter(|s| s.chars().last().expect("last A") == 'A')
-        .cloned()
-        .collect();
-    //dbg!(&currents);
-    currents
-        .iter()
         .map(|start| {
             let mut current = start.clone();
             let mut i = 0;
@@ -84,10 +77,9 @@ fn part2(ins: &[Ins], map: &HashMap<String, LR>) -> usize {
                 };
                 i += 1;
                 if current.chars().last().expect("last Z") == 'Z' {
-                    break;
+                    break i;
                 }
             }
-            i
         })
         .reduce(|lcm, a| lcm * a / gcd(lcm, a))
         .expect("an lcm")
