@@ -1,4 +1,5 @@
 use advent2023::*;
+use itertools::Itertools;
 fn main() {
     let things = parse(input!());
     //part 1
@@ -54,14 +55,7 @@ where
 }
 
 fn differences(v: &[i64]) -> Vec<i64> {
-    v.iter()
-        .skip(1)
-        .scan(v[0], |prev, x| {
-            let next = *x - *prev;
-            *prev = *x;
-            Some(next)
-        })
-        .collect()
+    v.iter().tuple_windows().map(|(a, b)| b - a).collect()
 }
 
 fn part2<I>(things: I) -> i64
