@@ -36,6 +36,7 @@ where
 {
     s.split(|c: char| !(c.is_ascii_digit() || c == '-'))
         .filter(|x| !x.is_empty())
+        .filter(|x| *x != "-")
         .map(|x| x.parse::<T>().expect("an int"))
 }
 #[test]
@@ -45,7 +46,7 @@ fn ints_test() {
         vec![1, 42, 3874, 384, 81, 1],
     );
     assert_eq!(
-        ints("Hello 1: 42,3874 384|81  -1").collect::<Vec<i16>>(),
-        vec![1, 42, 3874, 384, 81, -1],
+        ints("Hello 1: 42 -3874 - 384|81  -1").collect::<Vec<i16>>(),
+        vec![1, 42, -3874, 384, 81, -1],
     );
 }
