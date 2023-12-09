@@ -23,20 +23,7 @@ where
             dbg!(&x);
         })
         */
-        .map(|h| {
-            let mut v = vec![];
-            v.push(h);
-            let mut x = &v[0];
-            loop {
-                let d = differences(x);
-                if d.iter().all(|x| *x == 0) {
-                    break;
-                }
-                v.push(d);
-                x = &v[v.len() - 1];
-            }
-            v
-        })
+        .map(diff_array)
         /*
         .inspect(|x| {
             dbg!(&x);
@@ -58,6 +45,20 @@ fn differences(v: &[i64]) -> Vec<i64> {
     v.iter().tuple_windows().map(|(a, b)| b - a).collect()
 }
 
+fn diff_array(h: Vec<i64>) -> Vec<Vec<i64>> {
+    let mut v = vec![h];
+    let mut x = &v[0];
+    loop {
+        let d = differences(x);
+        if d.iter().all(|x| *x == 0) {
+            break;
+        }
+        v.push(d);
+        x = &v[v.len() - 1];
+    }
+    v
+}
+
 fn part2<I>(things: I) -> i64
 where
     I: Iterator<Item = ParsedItem>,
@@ -68,20 +69,7 @@ where
             dbg!(&x);
         })
         */
-        .map(|h| {
-            let mut v = vec![];
-            v.push(h);
-            let mut x = &v[0];
-            loop {
-                let d = differences(x);
-                if d.iter().all(|x| *x == 0) {
-                    break;
-                }
-                v.push(d);
-                x = &v[v.len() - 1];
-            }
-            v
-        })
+        .map(diff_array)
         /*
         .inspect(|x| {
             dbg!(&x);
@@ -91,9 +79,10 @@ where
             histories
                 .iter()
                 .rev()
-                .map(|h| *h.iter().next().expect("first lement"))
+                .map(|h| *h.iter().next().expect("first element"))
                 //.inspect(|first| println!("{first}, "))
-                .fold(0, |prev, x| x - prev)
+                .reduce(|prev, x| x - prev)
+                .expect("end")
         })
         //.inspect(|tot| println!("total: {tot}"))
         .sum()
