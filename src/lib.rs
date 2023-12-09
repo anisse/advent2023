@@ -34,7 +34,7 @@ where
     T: std::str::FromStr,
     <T as std::str::FromStr>::Err: std::fmt::Debug,
 {
-    s.split(|c: char| !c.is_ascii_digit())
+    s.split(|c: char| !(c.is_ascii_digit() || c == '-'))
         .filter(|x| !x.is_empty())
         .map(|x| x.parse::<T>().expect("an int"))
 }
@@ -43,5 +43,9 @@ fn ints_test() {
     assert_eq!(
         ints("Hello 1: 42,3874 384|81  1").collect::<Vec<u16>>(),
         vec![1, 42, 3874, 384, 81, 1],
+    );
+    assert_eq!(
+        ints("Hello 1: 42,3874 384|81  -1").collect::<Vec<i16>>(),
+        vec![1, 42, 3874, 384, 81, -1],
     );
 }
