@@ -17,9 +17,11 @@ where
     I: Iterator<Item = ParsedItem>,
 {
     things
+        /*
         .inspect(|x| {
             dbg!(&x);
         })
+        */
         .map(|h| {
             let mut v = vec![];
             v.push(h);
@@ -34,15 +36,17 @@ where
             }
             v
         })
+        /*
         .inspect(|x| {
             dbg!(&x);
         })
+        */
         .map(|histories| {
             histories
                 .iter()
                 .rev()
                 .map(|h| *h.iter().last().expect("last element"))
-                .inspect(|last| println!("{last}, "))
+                //.inspect(|last| println!("{last}, "))
                 .sum::<i64>()
         })
         //.inspect(|tot: i64| println!("total: {tot}"))
@@ -60,14 +64,45 @@ fn differences(v: &[i64]) -> Vec<i64> {
         .collect()
 }
 
-fn part2<I>(things: I) -> usize
+fn part2<I>(things: I) -> i64
 where
     I: Iterator<Item = ParsedItem>,
 {
-    for _ in things {
-        todo!()
-    }
-    42
+    things
+        /*
+        .inspect(|x| {
+            dbg!(&x);
+        })
+        */
+        .map(|h| {
+            let mut v = vec![];
+            v.push(h);
+            let mut x = &v[0];
+            loop {
+                let d = differences(x);
+                if d.iter().all(|x| *x == 0) {
+                    break;
+                }
+                v.push(d);
+                x = &v[v.len() - 1];
+            }
+            v
+        })
+        /*
+        .inspect(|x| {
+            dbg!(&x);
+        })
+        */
+        .map(|histories| {
+            histories
+                .iter()
+                .rev()
+                .map(|h| *h.iter().next().expect("first lement"))
+                .inspect(|first| println!("{first}, "))
+                .fold(0, |prev, x| x - prev)
+        })
+        .inspect(|tot| println!("total: {tot}"))
+        .sum()
 }
 
 #[test]
@@ -77,6 +112,9 @@ fn test() {
     let res = part1(things.clone());
     assert_eq!(res, 114);
     //part 2
-    //let res = part2(things);
-    //assert_eq!(res, 42);
+    let res = part2(things);
+    assert_eq!(res, 2);
+    let things = parse("0 3 6 9 12 15");
+    let res = part2(things);
+    assert_eq!(res, -3);
 }
