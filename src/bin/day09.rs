@@ -98,10 +98,10 @@ where
                 .iter()
                 .rev()
                 .map(|h| *h.iter().next().expect("first lement"))
-                .inspect(|first| println!("{first}, "))
+                //.inspect(|first| println!("{first}, "))
                 .fold(0, |prev, x| x - prev)
         })
-        .inspect(|tot| println!("total: {tot}"))
+        //.inspect(|tot| println!("total: {tot}"))
         .sum()
 }
 
