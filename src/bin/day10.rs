@@ -133,16 +133,12 @@ where
         if current == start {
             break;
         }
-        let new = next_from(&map, prev, current);
-        prev = current;
-        current = new;
+        (prev, current) = (current, next_from(&map, prev, current));
     }
-    map.iter()
-        .enumerate()
-        .flat_map(|(y, l)| l.iter().enumerate().map(move |(x, c)| (*c, (x, y))))
-        .filter(|(_, (x, y))| !edge_map[*y][*x])
-        //.inspect(|(c, p)| println!("{p:?}: {c} is {} inside", is_inside(*p, &map, &edge_map)))
-        .filter(|(_, p)| is_inside(*p, &map, &edge_map))
+    (0..map.len())
+        .flat_map(|y| (0..map[y].len()).map(move |x| (x, y)))
+        .filter(|(x, y)| !edge_map[*y][*x])
+        .filter(|p| is_inside(*p, &map, &edge_map))
         .count()
 }
 
