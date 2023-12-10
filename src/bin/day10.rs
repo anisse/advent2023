@@ -12,7 +12,6 @@ fn main() {
 }
 
 type ParsedItem = Vec<char>;
-type Map = Vec<ParsedItem>;
 type MapRef<'a> = &'a [ParsedItem];
 type Pos = (usize, usize);
 
@@ -29,14 +28,6 @@ fn next_map() -> HashMap<char, [(i8, i8); 2]> {
         ('L', [(0, -1), (1, 0)]),
         ('-', [(-1, 0), (1, 0)]),
     ])
-}
-//clockwise
-fn right_vector(v: (i8, i8)) -> (i8, i8) {
-    (v.1, -v.0)
-}
-//counter-clockwise
-fn left_vector(v: (i8, i8)) -> (i8, i8) {
-    (-v.1, v.0)
 }
 fn next_from(map: MapRef, prev: Pos, start: Pos) -> Pos {
     let xdiff = (prev.0 as isize - start.0 as isize) as i8;
@@ -85,53 +76,37 @@ where
     i / 2
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-enum Flood {
-    Unknown,
-    CountedDot,
-    Edge,
-    Ignored,
-}
-
-fn flood_from(map: MapRef, flood_map: &mut [Vec<Flood>], start: Pos) -> usize {
-    let (x, y) = (start.0, start.1);
-    if !matches!(flood_map[y][x], Flood::Unknown) {
-        return 0;
+fn is_inside(p: Pos, map: MapRef, edge_map: &[Vec<bool>]) -> bool {
+    let mut intersections = 0;
+    let mut left = 0;
+    let mut right = 0;
+    let y = p.1;
+    for x in p.0..map[y].len() {
+        if !edge_map[y][x] {
+            continue;
+        }
+        match map[y][x] {
+            'J' => left -= 1,
+            'L' => left += 1,
+            'F' => right += 1,
+            '7' => right -= 1,
+            '|' => intersections += 1,
+            _ => {}
+        }
+        if right != 0 && right == -left {
+            intersections += 1;
+            right = 0;
+            left = 0;
+        }
     }
-    let count;
-    println!(
-        "flooding at : {start:?}: {} {:?}",
-        map[y][x], flood_map[y][x],
-    );
-    if map[start.1][start.0] == '.' {
-        count = 1;
-        flood_map[y][x] = Flood::CountedDot;
-    } else {
-        count = 0;
-        flood_map[y][x] = Flood::Ignored;
-    }
-    count
-        + [(-1, 0), (0, 1), (0, -1), (1, 0)]
-            .iter()
-            .filter(|(_, ydiff)| !(*ydiff == -1 && y == 0))
-            .filter(|(xdiff, _)| !(*xdiff == -1 && x == 0))
-            .filter(|(xdiff, _)| !(*xdiff == 1 && x == map[0].len() - 1))
-            .filter(|(_, ydiff)| !(*ydiff == 1 && y == map.len() - 1))
-            .map(|(xdiff, ydiff)| {
-                (
-                    (x as isize + *xdiff as isize) as usize,
-                    (y as isize + *ydiff as isize) as usize,
-                )
-            })
-            .map(|(x, y)| flood_from(map, flood_map, (x, y)))
-            .sum::<usize>()
+    intersections % 2 == 1
 }
 
 fn part2<I>(things: I) -> usize
 where
     I: Iterator<Item = ParsedItem>,
 {
-    let map: Vec<_> = things.collect();
+    let mut map: Vec<_> = things.collect();
     let start = map
         .iter()
         .enumerate()
@@ -141,47 +116,18 @@ where
                 .find_map(|(x, c)| if *c == 'S' { Some((x, y)) } else { None })
         })
         .expect("S");
-    let mut counted_map = vec![vec![Flood::Unknown; map[0].len()]; map.len()];
+    map[start.1][start.0] = 'F'; // TODO: remove hardcoded replacement
+    let mut edge_map = vec![vec![false; map[0].len()]; map.len()];
     let mut prev = start;
     let mut current = (start.0 + 1, start.1); // hardcoded next //next_add(start, next[&map[start.1][start.0]][0]);
-    loop {
-        counted_map[current.1][current.0] = Flood::Edge;
-        //println!("{prev:?} -> {current:?} : {}", map[current.1][current.0]);
-        if current == start {
-            break;
-        }
-        let new = next_from(&map, prev, current);
-        prev = current;
-        current = new;
-    }
-    let mut prev = start;
-    let mut current = (start.0 + 1, start.1); // hardcoded next //next_add(start, next[&map[start.1][start.0]][0]);
-    let mut count = 0;
     loop {
         println!(
-            "Flooding from {prev:?} -> {current:?} : {}",
-            map[current.1][current.0]
+            "cur: {current:?}, size: {} {}",
+            edge_map[0].len(),
+            edge_map.len()
         );
-        let xdiff = (prev.0 as isize - current.0 as isize) as i8;
-        let ydiff = (prev.1 as isize - current.1 as isize) as i8;
-        let right = right_vector((xdiff, ydiff));
-        if ((current.0 > 0 && right.0 < 0)
-            || (current.0 < map[0].len() - 1 && right.0 > 0)
-            || right.0 == 0)
-            && ((current.1 > 0 && right.1 < 0)
-                || (current.1 < map.len() - 1 && right.1 > 0)
-                || right.1 == 0)
-        {
-            println!("Starting flood at {current:?} + {right:?}");
-            count += flood_from(
-                &map,
-                &mut counted_map,
-                (
-                    (current.0 as isize + right.0 as isize) as usize,
-                    (current.1 as isize + right.1 as isize) as usize,
-                ),
-            );
-        }
+        println!("{prev:?} -> {current:?} : {}", map[current.1][current.0]);
+        edge_map[current.1][current.0] = true;
         if current == start {
             break;
         }
@@ -189,7 +135,13 @@ where
         prev = current;
         current = new;
     }
-    count
+    map.iter()
+        .enumerate()
+        .flat_map(|(y, l)| l.iter().enumerate().map(move |(x, c)| (*c, (x, y))))
+        .filter(|(_, (x, y))| !edge_map[*y][*x])
+        .inspect(|(c, p)| println!("{p:?}: {c} is {} inside", is_inside(*p, &map, &edge_map)))
+        .filter(|(_, p)| is_inside(*p, &map, &edge_map))
+        .count()
 }
 
 #[test]
@@ -201,8 +153,22 @@ fn test() {
     //part 2
     let res = part2(things);
     assert_eq!(res, 4);
-    for t in [(
-        "FF7FSF7F7F7F7F7F---7
+    for (i, t) in [
+        (
+            ".F----7F7F7F7F-7....
+.|F--7||||||||FJ....
+.||.FJ||||||||L7....
+FJL7L7LJLJ||LJ.L-7..
+L--J.L7...LJS7F-7L7.
+....F-J..F7FJ|L7L7L7
+....L7.F7||L7|.L7L7|
+.....|FJLJ|FJ|F7|.LJ
+....FJL-7.||.||||...
+....L---J.LJ.LJLJ...",
+            8,
+        ),
+        (
+            "FF7S7F7F7F7F7F7F---7
 L|LJ||||||||||||F--J
 FL-7LJLJ||||||LJL-77
 F--JF--7||LJLJ7F7FJ-
@@ -212,12 +178,21 @@ L---JF-JLJ.||-FJLJJ7
 7-L-JL7||F7|L7F-7F7|
 L.L7LFJ|||||FJL7||LJ
 L7JLJL-JLJLJL--JLJ.L",
-        10,
-    )]
+            10,
+        ),
+    ]
     .iter()
+    .enumerate()
     {
         let things = parse(t.0);
         let res = part2(things);
-        assert_eq!(res, t.1);
+        assert_eq!(res, t.1, "test {i}");
+        println!("=======================================");
+        println!("=======================================");
+        println!("=======================================");
+        println!("=======================================");
+        println!("=======================================");
+        println!("=======================================");
+        println!("test {i} is OK");
     }
 }
