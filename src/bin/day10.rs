@@ -40,6 +40,17 @@ fn next_from(map: MapRef, prev: Pos, start: Pos) -> Pos {
     }
     unreachable!();
 }
+fn connected(map: MapRef, next: Pos, start: Pos) -> bool {
+    let xdiff = (start.0 as isize - next.0 as isize) as i8;
+    let ydiff = (start.1 as isize - next.1 as isize) as i8;
+
+    for n in next_map()[&map[next.1][next.0]].iter() {
+        if *n == (xdiff, ydiff) {
+            return true;
+        }
+    }
+    false
+}
 fn next_add(start: Pos, diff: (i8, i8)) -> Pos {
     (
         (start.0 as isize + diff.0 as isize) as usize,
@@ -116,10 +127,10 @@ where
                 .find_map(|(x, c)| if *c == 'S' { Some((x, y)) } else { None })
         })
         .expect("S");
-    map[start.1][start.0] = 'F'; // TODO: remove hardcoded replacement
+    map[start.1][start.0] = convert_start(&map, start);
     let mut edge_map = vec![vec![false; map[0].len()]; map.len()];
     let mut prev = start;
-    let mut current = (start.0 + 1, start.1); // hardcoded next //next_add(start, next[&map[start.1][start.0]][0]);
+    let mut current = next_add(start, next_map()[&map[start.1][start.0]][0]);
     loop {
         /*
         println!(
@@ -140,6 +151,35 @@ where
         .filter(|(x, y)| !edge_map[*y][*x])
         .filter(|p| is_inside(*p, &map, &edge_map))
         .count()
+}
+
+fn convert_start(map: MapRef, start: Pos) -> char {
+    let (x, y) = start;
+    let nexts: Vec<_> = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        .iter()
+        .filter(|(_, ydiff)| !(*ydiff == -1 && y == 0))
+        .filter(|(xdiff, _)| !(*xdiff == -1 && x == 0))
+        .filter(|(xdiff, _)| !(*xdiff == 1 && x == map[0].len() - 1))
+        .filter(|(_, ydiff)| !(*ydiff == 1 && y == map.len() - 1))
+        .map(|diff| next_add(start, *diff))
+        .filter(|next| map[next.1][next.0] != '.')
+        //.inspect(|next| println!("{start:?} --> {next:?} c={}", map[next.1][next.0]))
+        .filter(|next| connected(map, *next, start))
+        .map(|next| {
+            (
+                (next.0 as isize - start.0 as isize) as i8,
+                (next.1 as isize - start.1 as isize) as i8,
+            )
+        })
+        .collect();
+    assert_eq!(nexts.len(), 2);
+    *next_map()
+        .iter()
+        .find(|(_, v)| {
+            (v[0] == nexts[0] && v[1] == nexts[1]) || (v[0] == nexts[1] && v[1] == nexts[0])
+        })
+        .map(|(k, _)| k)
+        .expect("a replacement")
 }
 
 #[test]
