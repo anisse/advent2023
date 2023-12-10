@@ -121,12 +121,14 @@ where
     let mut prev = start;
     let mut current = (start.0 + 1, start.1); // hardcoded next //next_add(start, next[&map[start.1][start.0]][0]);
     loop {
+        /*
         println!(
             "cur: {current:?}, size: {} {}",
             edge_map[0].len(),
             edge_map.len()
         );
         println!("{prev:?} -> {current:?} : {}", map[current.1][current.0]);
+        */
         edge_map[current.1][current.0] = true;
         if current == start {
             break;
@@ -139,7 +141,7 @@ where
         .enumerate()
         .flat_map(|(y, l)| l.iter().enumerate().map(move |(x, c)| (*c, (x, y))))
         .filter(|(_, (x, y))| !edge_map[*y][*x])
-        .inspect(|(c, p)| println!("{p:?}: {c} is {} inside", is_inside(*p, &map, &edge_map)))
+        //.inspect(|(c, p)| println!("{p:?}: {c} is {} inside", is_inside(*p, &map, &edge_map)))
         .filter(|(_, p)| is_inside(*p, &map, &edge_map))
         .count()
 }
