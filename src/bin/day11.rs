@@ -57,18 +57,20 @@ fn common(map: MapRef, expand_factor: usize) -> usize {
                 c1.1.max(c2.1),
                 c1.1.min(c2.1),
             );
-            let mut ydiff = ymax - ymin;
-            for y in expand_y.iter() {
-                if *y < ymax && *y > ymin {
-                    ydiff += expand_factor - 1;
-                }
-            }
-            let mut xdiff = xmax - xmin;
-            for x in expand_x.iter() {
-                if *x < xmax && *x > xmin {
-                    xdiff += expand_factor - 1;
-                }
-            }
+            let ydiff = ymax - ymin
+                + expand_y
+                    .iter()
+                    .skip_while(|y| **y < ymin)
+                    .take_while(|y| **y < ymax)
+                    .count()
+                    * (expand_factor - 1);
+            let xdiff = xmax - xmin
+                + expand_x
+                    .iter()
+                    .skip_while(|x| **x < xmin)
+                    .take_while(|x| **x < xmax)
+                    .count()
+                    * (expand_factor - 1);
             sum += ydiff + xdiff;
         }
     }
