@@ -18,13 +18,26 @@ where
 {
     let map: Vec<_> = things.collect();
     let newmap = expand(&map);
-    for l in newmap {
-        for c in l {
-            print!("{c}");
+    let coords: Vec<_> = newmap
+        .iter()
+        .enumerate()
+        .flat_map(|(y, l)| {
+            l.iter()
+                .enumerate()
+                .filter(|(_, c)| **c == '#')
+                .map(move |(x, _)| (x, y))
+        })
+        .collect();
+
+    let mut sum = 0;
+    for i in 0..coords.len() {
+        for j in (i + 1)..coords.len() {
+            let c1 = coords[i];
+            let c2 = coords[j];
+            sum += c1.0.max(c2.0) - c1.0.min(c2.0) + (c1.1.max(c2.1) - c1.1.min(c2.1));
         }
-        println!();
     }
-    42
+    sum
 }
 
 type MapRef<'a> = &'a [Vec<char>];
