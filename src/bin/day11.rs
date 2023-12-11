@@ -61,14 +61,14 @@ fn common(map: MapRef, expand_factor: usize) -> usize {
             let ydiff = ymax - ymin
                 + expand_y
                     .iter()
-                    .skip_while(|y| **y < ymin)
+                    .skip_while(|y| **y <= ymin)
                     .take_while(|y| **y < ymax)
                     .count()
                     * (expand_factor - 1);
             let xdiff = xmax - xmin
                 + expand_x
                     .iter()
-                    .skip_while(|x| **x < xmin)
+                    .skip_while(|x| **x <= xmin)
                     .take_while(|x| **x < xmax)
                     .count()
                     * (expand_factor - 1);
