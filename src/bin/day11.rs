@@ -1,4 +1,6 @@
 use advent2023::*;
+use itertools::Itertools;
+
 fn main() {
     let things = parse(input!());
     //part 1
@@ -46,11 +48,10 @@ fn common(map: MapRef, expand_factor: usize) -> usize {
         })
         .collect();
 
-    let mut sum = 0;
-    for i in 0..coords.len() {
-        for j in (i + 1)..coords.len() {
-            let c1 = coords[i];
-            let c2 = coords[j];
+    coords
+        .iter()
+        .tuple_combinations()
+        .map(|(c1, c2)| {
             let (xmax, xmin, ymax, ymin) = (
                 c1.0.max(c2.0),
                 c1.0.min(c2.0),
@@ -71,10 +72,9 @@ fn common(map: MapRef, expand_factor: usize) -> usize {
                     .take_while(|x| **x < xmax)
                     .count()
                     * (expand_factor - 1);
-            sum += ydiff + xdiff;
-        }
-    }
-    sum
+            ydiff + xdiff
+        })
+        .sum()
 }
 fn part2<I>(things: I) -> usize
 where
