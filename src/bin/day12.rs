@@ -47,20 +47,15 @@ struct Key {
 }
 type Memo = HashMap<Key, usize>;
 fn arrangements_memo(memo: &mut Memo, r: &Record, consumed: usize, group_idx: usize) -> usize {
-    if let Some(count) = memo.get(&Key {
+    let key = Key {
         consumed,
         group_idx,
-    }) {
+    };
+    if let Some(count) = memo.get(&key) {
         return *count;
     }
     let count = arrangements_internal(memo, r, consumed, group_idx);
-    memo.insert(
-        Key {
-            consumed,
-            group_idx,
-        },
-        count,
-    );
+    memo.insert(key, count);
     count
 }
 fn arrangements_internal(
