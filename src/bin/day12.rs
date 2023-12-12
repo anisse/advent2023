@@ -132,12 +132,22 @@ fn arrangements_internal(
                 return 0;
             }
         }
-    }
-    // remaining characters
-    if consumed < r.row.len() {
-        if !r.row.iter().skip(consumed).all(|c| *c != '#') {
+        let remaining = r.row.len() - consumed;
+        let group_total = r
+            .groups
+            .iter()
+            .skip(g + 1)
+            .map(|x| *x as usize)
+            .sum::<usize>();
+        let groups_left = r.groups.len() - (g + 1);
+        if groups_left > 0 && remaining < group_total + groups_left - 1 {
+            //println!("Skipping rest of {remaining} characters, cannot fit {groups_left} group of {group_total} elements");
             return 0;
         }
+    }
+    // remaining characters
+    if consumed < r.row.len() && !r.row.iter().skip(consumed).all(|c| *c != '#') {
+        return 0;
     }
     //println!("Record done with count 1");
     1
@@ -146,11 +156,6 @@ fn arrangements_internal(
 #[test]
 fn test_arr() {
     for (t, res) in [
-        (".??..??...?##. 1,1,3", 4),
-        ("???.### 1,1,3", 1),
-        ("?#?#?#?#?#?#?#? 1,3,1,6", 1),
-        ("????.#...#... 4,1,1", 1),
-        ("????.######..#####. 1,6,5", 4),
         (". 1", 0),
         ("???? 2,1", 1),
         ("????? 2,1", 3),
@@ -161,6 +166,11 @@ fn test_arr() {
         ("???? 1", 4),
         ("??# 1", 1),
         ("??#? 1", 1),
+        (".??..??...?##. 1,1,3", 4),
+        ("???.### 1,1,3", 1),
+        ("?#?#?#?#?#?#?#? 1,3,1,6", 1),
+        ("????.#...#... 4,1,1", 1),
+        ("????.######..#####. 1,6,5", 4),
     ]
     .iter()
     {
