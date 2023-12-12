@@ -79,10 +79,11 @@ fn arrangements_internal(
             }
             '?' => {
                 return if !consume(rest, group_len) {
-                    0
+                    0 // # does not work
                 } else {
+                    // It can be a #
                     arrangements_memo(memo, r, current + group_len + 1, group_idx + 1)
-                } + arrangements_memo(memo, r, current + 1, group_idx);
+                } + arrangements_memo(memo, r, current + 1, group_idx); // Or a .
             }
             _ => unreachable!(),
         }
