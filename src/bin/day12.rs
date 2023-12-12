@@ -140,9 +140,20 @@ fn arrangements_internal(
             .map(|x| *x as usize)
             .sum::<usize>();
         let groups_left = r.groups.len() - (g + 1);
+        //println!("Groups left: {groups_left}, char remaining: {remaining}");
         if groups_left > 0 && remaining < group_total + groups_left - 1 {
             //println!("Skipping rest of {remaining} characters, cannot fit {groups_left} group of {group_total} elements");
             return 0;
+        }
+        if remaining > 1 && groups_left == 1 && r.row.iter().skip(consumed).all(|c| *c == '?') {
+            let last = r.groups[g + 1] as usize;
+            /*
+            println!(
+                "Skip last group of {last} chars: {remaining} all ? : {} possibilities",
+                remaining - last + 1
+            );
+            */
+            return remaining - last + 1;
         }
     }
     // remaining characters
@@ -171,6 +182,9 @@ fn test_arr() {
         ("?#?#?#?#?#?#?#? 1,3,1,6", 1),
         ("????.#...#... 4,1,1", 1),
         ("????.######..#####. 1,6,5", 4),
+        ("??????? 1", 7),
+        ("??????? 2", 6),
+        ("??????? 3", 5),
     ]
     .iter()
     {
@@ -184,7 +198,8 @@ where
     I: Iterator<Item = ParsedItem>,
 {
     records
-        .map(|r| {
+        .enumerate()
+        .map(|(i, r)| {
             let mut row = vec![];
             let mut groups = vec![];
             for i in 0..5 {
@@ -194,10 +209,23 @@ where
                 }
                 groups.extend_from_slice(&r.groups);
             }
+            println!("{i}");
             Record { row, groups }
         })
         .map(|r| arrangements(&r))
         .sum()
+}
+#[test]
+fn test_arr_2() {
+    for (t, res) in [
+        ("?###???????? 3,2,1", 506250),
+        (".??..??...?##. 1,1,3", 16384),
+    ]
+    .iter()
+    {
+        let r = parse(t);
+        assert_eq!(part2(r), *res, "test {t} is not {res}");
+    }
 }
 
 #[test]
