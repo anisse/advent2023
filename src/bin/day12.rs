@@ -34,42 +34,30 @@ where
 }
 
 fn arrangements(r: &Record) -> usize {
-    println!("===================================");
-    println!("===================================");
-    println!("===================================");
-    println!("===================================");
-    println!("===================================");
-    println!("Start of record testing {r:?}");
+    //println!("===================================");
+    //println!("Start of record testing {r:?}");
     let mut memo = HashMap::new();
-    arrangements_memo(&mut memo, r, 0, 0, 0)
+    //arrangements_memo(&mut memo, r, 0, 0, 0)
+    arrangements_memo(&mut memo, r, 0, 0)
 }
 #[derive(PartialEq, Eq, Hash)]
 struct Key {
     consumed: usize,
     group_idx: usize,
-    group_length: u8,
 }
 type Memo = HashMap<Key, usize>;
-fn arrangements_memo(
-    memo: &mut Memo,
-    r: &Record,
-    group_length: u8,
-    consumed: usize,
-    group_idx: usize,
-) -> usize {
+fn arrangements_memo(memo: &mut Memo, r: &Record, consumed: usize, group_idx: usize) -> usize {
     if let Some(count) = memo.get(&Key {
         consumed,
         group_idx,
-        group_length,
     }) {
         return *count;
     }
-    let count = arrangements_internal(memo, r, group_length, consumed, group_idx);
+    let count = arrangements_internal(memo, r, consumed, group_idx);
     memo.insert(
         Key {
             consumed,
             group_idx,
-            group_length,
         },
         count,
     );
@@ -78,127 +66,46 @@ fn arrangements_memo(
 fn arrangements_internal(
     memo: &mut Memo,
     r: &Record,
-    mut group_length: u8,
-    mut consumed: usize,
-    group_idx: usize,
+    mut current: usize,
+    mut group_idx: usize,
 ) -> usize {
-    for g in group_idx..r.groups.len() {
-        let current_group = r.groups[g];
-        let mut group_ended = false;
-        while consumed < r.row.len() {
-            match r.row[consumed] {
-                '.' => {
-                    if !(group_length == current_group || group_length == 0) {
-                        //println!("group has not ended and we found a .");
-
-                        return 0; // impossible arrangement
-                    }
-                    if group_length == current_group {
-                        //println!(". marks end of group, break");
-                        group_length = 0;
-                        consumed += 1;
-                        group_ended = true;
-                        break;
-                    }
+    while current < r.row.len() && group_idx < r.groups.len() {
+        let group_len = r.groups[group_idx] as usize;
+        let rest = &r.row[current..];
+        match r.row[current] {
+            '.' => {}
+            '#' => {
+                // consume group
+                if !consume(rest, group_len) {
+                    return 0;
                 }
-                '#' => {
-                    if group_length >= current_group {
-                        //println!("group {current_group} is too big vs group size {current_group}");
-                        return 0; // impossible arrangement
-                    }
-                    //println!("# in group");
-                    group_length += 1;
-                }
-                '?' => {
-                    // must be one or the other
-                    if group_length > 0 && group_length < current_group {
-                        //println!("? must be #");
-                        group_length += 1;
-                    } else if group_length == current_group {
-                        //println!("? must be .");
-                        group_length = 0;
-                        consumed += 1;
-                        group_ended = true;
-                        break;
-                    }
-                    // can be either . or #
-                    else if group_length == 0 {
-                        // not in group
-                        //println!("? can be . or # recursion");
-                        // #
-                        let c1 = arrangements_memo(memo, r, group_length + 1, consumed + 1, g);
-                        //println!("recursion {consumed} # end: {c1}");
-                        // .
-                        let c2 = arrangements_memo(memo, r, group_length, consumed + 1, g);
-                        //println!("recursion {consumed} . end: {c2}");
-                        return c1 + c2;
-                    } else {
-                        unreachable!();
-                    }
-                }
-                _ => unreachable!(),
+                current += group_len;
+                group_idx += 1;
             }
-            /*
-            println!(
-                "matching of character {consumed} = {} in group {current_group} done",
-                r.row[consumed]
-            );
-            */
-            consumed += 1;
-        }
-        //println!("Group {g} = {current_group} end");
-        if consumed == r.row.len() {
-            /*
-            println!(
-                "Reached end of row; group_length = {group_length}, group_ended = {group_ended}"
-            );
-            */
-            if group_length == 0 && !group_ended {
-                // Impossible configuration
-                //println!("Group not done: expected {current_group} to be done");
-                return 0;
+            '?' => {
+                return if !consume(rest, group_len) {
+                    0
+                } else {
+                    arrangements_memo(memo, r, current + group_len + 1, group_idx + 1)
+                } + arrangements_memo(memo, r, current + 1, group_idx);
             }
-            if group_length != 0 && group_length != current_group {
-                // Impossible configuration
-                //println!("Group not done: expected {current_group}, got {group_length}");
-                return 0;
-            }
-            if g != r.groups.len() - 1 {
-                // All groups not used
-                //println!("There are remaining groups");
-                return 0;
-            }
+            _ => unreachable!(),
         }
-        let remaining = r.row.len() - consumed;
-        let group_total = r
-            .groups
-            .iter()
-            .skip(g + 1)
-            .map(|x| *x as usize)
-            .sum::<usize>();
-        let groups_left = r.groups.len() - (g + 1);
-        //println!("Groups left: {groups_left}, char remaining: {remaining}");
-        if groups_left > 0 && remaining < group_total + groups_left - 1 {
-            //println!("Skipping rest of {remaining} characters, cannot fit {groups_left} group of {group_total} elements");
-            return 0;
-        }
-        if remaining > 1 && groups_left == 1 && r.row.iter().skip(consumed).all(|c| *c == '?') {
-            let last = r.groups[g + 1] as usize;
-            /*
-            println!(
-                "Skip last group of {last} chars: {remaining} all ? : {} possibilities",
-                remaining - last + 1
-            );
-            */
-            return remaining - last + 1;
-        }
+        current += 1;
     }
-    // remaining characters
-    if consumed < r.row.len() && !r.row.iter().skip(consumed).all(|c| *c != '#') {
+    if group_idx != r.groups.len()  // remaining groups
+    // OR remaining unconsumed #, part of no group
+        || !r.row.iter().skip(current).all(|c| *c != '#')
+    {
         return 0;
     }
-    //println!("Record done with count 1");
     1
+}
+
+fn consume(s: &[char], len: usize) -> bool {
+    len <= s.len()
+        && s.iter().take(len).all(|c| *c != '.')
+        && (len == s.len() /* end */|| s[len] != '#'/* has separator */)
 }
 
 #[test]
@@ -235,8 +142,7 @@ where
     I: Iterator<Item = ParsedItem>,
 {
     records
-        .enumerate()
-        .map(|(i, r)| {
+        .map(|r| {
             let mut row = vec![];
             let mut groups = vec![];
             for i in 0..5 {
@@ -246,7 +152,6 @@ where
                 }
                 groups.extend_from_slice(&r.groups);
             }
-            println!("{i}");
             Record { row, groups }
         })
         .map(|r| arrangements(&r))
