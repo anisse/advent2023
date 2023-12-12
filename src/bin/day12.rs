@@ -53,11 +53,11 @@ fn arrangements_internal(
             match r.row[consumed] {
                 '.' => {
                     if !(group_length == current_group || group_length == 0) {
-                        println!("group has not ended and we found a .");
+                        //println!("group has not ended and we found a .");
                         return 0; // impossible arrangement
                     }
                     if group_length == current_group {
-                        println!(". marks end of group, break");
+                        //println!(". marks end of group, break");
                         group_length = 0;
                         consumed += 1;
                         group_ended = true;
@@ -66,19 +66,19 @@ fn arrangements_internal(
                 }
                 '#' => {
                     if group_length >= current_group {
-                        println!("group {current_group} is too big vs group size {current_group}");
+                        //println!("group {current_group} is too big vs group size {current_group}");
                         return 0; // impossible arrangement
                     }
-                    println!("# in group");
+                    //println!("# in group");
                     group_length += 1;
                 }
                 '?' => {
                     // must be one or the other
                     if group_length > 0 && group_length < current_group {
-                        println!("? must be #");
+                        //println!("? must be #");
                         group_length += 1;
                     } else if group_length == current_group {
-                        println!("? must be .");
+                        //println!("? must be .");
                         group_length = 0;
                         consumed += 1;
                         group_ended = true;
@@ -87,13 +87,13 @@ fn arrangements_internal(
                     // can be either . or #
                     else if group_length == 0 {
                         // not in group
-                        println!("? can be . or # recursion");
+                        //println!("? can be . or # recursion");
                         // #
                         let c1 = arrangements_internal(r, group_length + 1, consumed + 1, g);
-                        println!("recursion {consumed} # end: {c1}");
+                        //println!("recursion {consumed} # end: {c1}");
                         // .
                         let c2 = arrangements_internal(r, group_length, consumed + 1, g);
-                        println!("recursion {consumed} . end: {c2}");
+                        //println!("recursion {consumed} . end: {c2}");
                         return c1 + c2;
                     } else {
                         unreachable!();
@@ -101,30 +101,34 @@ fn arrangements_internal(
                 }
                 _ => unreachable!(),
             }
+            /*
             println!(
                 "matching of character {consumed} = {} in group {current_group} done",
                 r.row[consumed]
             );
+            */
             consumed += 1;
         }
-        println!("Group {g} = {current_group} end");
+        //println!("Group {g} = {current_group} end");
         if consumed == r.row.len() {
+            /*
             println!(
                 "Reached end of row; group_length = {group_length}, group_ended = {group_ended}"
             );
+            */
             if group_length == 0 && !group_ended {
                 // Impossible configuration
-                println!("Group not done: expected {current_group} to be done");
+                //println!("Group not done: expected {current_group} to be done");
                 return 0;
             }
             if group_length != 0 && group_length != current_group {
                 // Impossible configuration
-                println!("Group not done: expected {current_group}, got {group_length}");
+                //println!("Group not done: expected {current_group}, got {group_length}");
                 return 0;
             }
             if g != r.groups.len() - 1 {
                 // All groups not used
-                println!("There are remaining groups");
+                //println!("There are remaining groups");
                 return 0;
             }
         }
@@ -135,7 +139,7 @@ fn arrangements_internal(
             return 0;
         }
     }
-    println!("Record done with count 1");
+    //println!("Record done with count 1");
     1
 }
 
@@ -165,14 +169,25 @@ fn test_arr() {
     }
 }
 
-fn part2<I>(things: I) -> usize
+fn part2<I>(records: I) -> usize
 where
     I: Iterator<Item = ParsedItem>,
 {
-    for _ in things {
-        todo!()
-    }
-    42
+    records
+        .map(|r| {
+            let mut row = vec![];
+            let mut groups = vec![];
+            for i in 0..5 {
+                row.extend_from_slice(&r.row);
+                if i != 4 {
+                    row.push('?');
+                }
+                groups.extend_from_slice(&r.groups);
+            }
+            Record { row, groups }
+        })
+        .map(|r| arrangements(&r))
+        .sum()
 }
 
 #[test]
@@ -182,8 +197,6 @@ fn test() {
     let res = part1(things.clone());
     assert_eq!(res, 21);
     //part 2
-    /*
     let res = part2(things);
-    assert_eq!(res, 42);
-    */
+    assert_eq!(res, 525152);
 }
