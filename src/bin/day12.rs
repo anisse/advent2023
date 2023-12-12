@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use advent2023::*;
 fn main() {
     let things = parse(input!());
@@ -38,14 +40,34 @@ fn arrangements(r: &Record) -> usize {
     println!("===================================");
     println!("===================================");
     println!("Start of record testing {r:?}");
-    arrangements_internal(r, 0, 0, 0)
+    let mut memo = HashMap::new();
+    arrangements_internal(&mut memo, r, 0, 0, 0)
+}
+#[derive(PartialEq, Eq, Hash)]
+struct Key {
+    consumed: usize,
+    group_idx: usize,
+    group_length: u8,
+}
+type Memo = HashMap<Key, usize>;
+fn memoize(memo: &Memo, group_length: u8, consumed: usize, group_idx: usize) -> Option<usize> {
+    memo.get(&Key {
+        consumed,
+        group_idx,
+        group_length,
+    })
+    .copied()
 }
 fn arrangements_internal(
+    memo: &mut Memo,
     r: &Record,
     mut group_length: u8,
     mut consumed: usize,
     group_idx: usize,
 ) -> usize {
+    if let Some(usize) = memoize(memo, group_length, consumed, group_idx) {
+        return usize;
+    }
     for g in group_idx..r.groups.len() {
         let current_group = r.groups[g];
         let mut group_ended = false;
@@ -54,6 +76,7 @@ fn arrangements_internal(
                 '.' => {
                     if !(group_length == current_group || group_length == 0) {
                         //println!("group has not ended and we found a .");
+
                         return 0; // impossible arrangement
                     }
                     if group_length == current_group {
@@ -89,10 +112,26 @@ fn arrangements_internal(
                         // not in group
                         //println!("? can be . or # recursion");
                         // #
-                        let c1 = arrangements_internal(r, group_length + 1, consumed + 1, g);
+                        let c1 = arrangements_internal(memo, r, group_length + 1, consumed + 1, g);
+                        memo.insert(
+                            Key {
+                                consumed: consumed + 1,
+                                group_idx: g,
+                                group_length: group_length + 1,
+                            },
+                            c1,
+                        );
                         //println!("recursion {consumed} # end: {c1}");
                         // .
-                        let c2 = arrangements_internal(r, group_length, consumed + 1, g);
+                        let c2 = arrangements_internal(memo, r, group_length, consumed + 1, g);
+                        memo.insert(
+                            Key {
+                                consumed: consumed + 1,
+                                group_idx: g,
+                                group_length,
+                            },
+                            c2,
+                        );
                         //println!("recursion {consumed} . end: {c2}");
                         return c1 + c2;
                     } else {
