@@ -33,7 +33,7 @@ fn reflect_score(smudges: u8) -> Box<dyn Fn(ParsedItem) -> usize> {
         let cols = p[0].len();
         for r in 0..(rows - 1) {
             let mut unmatch = 0;
-            'outer: for c in 0..cols {
+            (0..cols).for_each(|c| {
                 //println!("Testing row {r}, col {c}");
                 for (r1, r2) in (0..=r).rev().zip((r + 1)..rows) {
                     //println!("({r1}, {c}) vs ({r2}, {c}) = {}", p[r1][c] != p[r2][c]);
@@ -41,10 +41,10 @@ fn reflect_score(smudges: u8) -> Box<dyn Fn(ParsedItem) -> usize> {
                         unmatch += 1;
                     }
                     if unmatch > smudges {
-                        break 'outer;
+                        return;
                     }
                 }
-            }
+            });
             if unmatch == smudges {
                 //println!("Row {r} is mirror ({unmatch} smudges)");
                 return (r + 1) * 100;
