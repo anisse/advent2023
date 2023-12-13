@@ -19,9 +19,12 @@ where
     things
         .map(|l| l.chars().filter(|c| c.is_ascii_digit()).collect())
         .map(|s: String| {
-            [s.chars().next().unwrap(), s.chars().last().unwrap()]
-                .iter()
-                .collect()
+            [
+                s.chars().next().expect("first digit not found"),
+                s.chars().last().expect("last digit not found"),
+            ]
+            .iter()
+            .collect()
         })
         .map(|l: String| l.parse::<usize>().expect("not int"))
         .sum()
@@ -87,8 +90,8 @@ fn replace_digits(s: &str) -> String {
 fn test() {
     let things = parse(sample!());
     //part 1
-    //let res = part1(things.clone());
-    //assert_eq!(res, 42);
+    let res = part1(things.clone());
+    assert_eq!(res, 231);
     //part 2
     let res = part2(things);
     assert_eq!(res, 281);
