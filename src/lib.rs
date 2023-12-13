@@ -15,11 +15,25 @@ macro_rules! sample {
         ))
     };
 }
+#[cfg(feature = "ci_no_input")]
+#[macro_export]
+macro_rules! input_dir {
+    () => {
+        "../samples/"
+    };
+}
+#[cfg(not(feature = "ci_no_input"))]
+#[macro_export]
+macro_rules! input_dir {
+    () => {
+        "../inputs/"
+    };
+}
 #[macro_export]
 macro_rules! input {
     () => {
         include_str!(concat!(
-            concat!("../inputs/", env!("CARGO_BIN_NAME")),
+            concat!(input_dir!(), env!("CARGO_BIN_NAME")),
             ".txt"
         ))
     };
