@@ -51,12 +51,9 @@ fn arrangements_memo(memo: &mut Memo, r: &Record, consumed: usize, group_idx: us
         consumed,
         group_idx,
     };
-    if let Some(count) = memo.get(&key) {
-        return *count;
-    }
-    let count = arrangements_internal(memo, r, consumed, group_idx);
-    memo.insert(key, count);
-    count
+    return *memo
+        .entry(key)
+        .or_insert_with(|| arrangements_internal(memo, r, consumed, group_idx));
 }
 fn arrangements_internal(
     memo: &mut Memo,
