@@ -18,96 +18,58 @@ fn part1<I>(things: I) -> usize
 where
     I: Iterator<Item = ParsedItem>,
 {
-    things.map(reflect_score).sum()
+    things.map(reflect_score(0)).sum()
 }
 
-fn reflect_score(p: ParsedItem) -> usize {
-    let rows = p.len();
-    let cols = p[0].len();
-    for r in 0..rows {
-        let mut mirror = true;
-        let mut tested = false;
-        'outer: for c in 0..cols {
-            //println!("Testing row {r}, col {c}");
-            for (r1, r2) in (0..=r).rev().zip((r + 1)..rows) {
-                tested = true;
-                //println!("({r1}, {c}) vs ({r2}, {c}) = {}", p[r1][c] != p[r2][c]);
-                if p[r1][c] != p[r2][c] {
-                    mirror = false;
-                    break 'outer;
-                }
-            }
-        }
-        if mirror && tested {
-            //println!("Row {r} is mirror");
-            return (r + 1) * 100;
-        }
-    }
-    for c in 0..cols {
-        let mut mirror = true;
-        (0..rows).for_each(|r| {
-            for (c1, c2) in (0..=c).rev().zip((c + 1)..cols) {
-                //println!("({r}, {c1}) vs ({r}, {c2})");
-                if p[r][c1] != p[r][c2] {
-                    mirror = false;
-                    return;
-                }
-            }
-        });
-        if mirror {
-            //println!("col {c} is mirror");
-            return c + 1;
-        }
-    }
-    0
-}
 fn part2<I>(things: I) -> usize
 where
     I: Iterator<Item = ParsedItem>,
 {
-    things.map(reflect_score_2).sum()
+    things.map(reflect_score(1)).sum()
 }
-fn reflect_score_2(p: ParsedItem) -> usize {
-    let rows = p.len();
-    let cols = p[0].len();
-    for r in 0..rows {
-        let mut unmatch = 0;
-        'outer: for c in 0..cols {
-            //println!("Testing row {r}, col {c}");
-            for (r1, r2) in (0..=r).rev().zip((r + 1)..rows) {
-                //println!("({r1}, {c}) vs ({r2}, {c}) = {}", p[r1][c] != p[r2][c]);
-                if p[r1][c] != p[r2][c] {
-                    unmatch += 1;
-                }
-                if unmatch > 1 {
-                    break 'outer;
-                }
-            }
-        }
-        if unmatch == 1 {
-            //println!("Row {r} is mirror");
-            return (r + 1) * 100;
-        }
-    }
-    for c in 0..cols {
-        let mut unmatch = 0;
-        (0..rows).for_each(|r| {
-            for (c1, c2) in (0..=c).rev().zip((c + 1)..cols) {
-                //println!("({r}, {c1}) vs ({r}, {c2})");
-                if p[r][c1] != p[r][c2] {
-                    unmatch += 1;
-                }
-                if unmatch > 1 {
-                    return;
+fn reflect_score(smudges: u8) -> Box<dyn Fn(ParsedItem) -> usize> {
+    Box::new(move |p: ParsedItem| {
+        let rows = p.len();
+        let cols = p[0].len();
+        for r in 0..(rows - 1) {
+            let mut unmatch = 0;
+            'outer: for c in 0..cols {
+                //println!("Testing row {r}, col {c}");
+                for (r1, r2) in (0..=r).rev().zip((r + 1)..rows) {
+                    //println!("({r1}, {c}) vs ({r2}, {c}) = {}", p[r1][c] != p[r2][c]);
+                    if p[r1][c] != p[r2][c] {
+                        unmatch += 1;
+                    }
+                    if unmatch > smudges {
+                        break 'outer;
+                    }
                 }
             }
-        });
-        if unmatch == 1 {
-            //println!("col {c} is mirror");
-            return c + 1;
+            if unmatch == smudges {
+                //println!("Row {r} is mirror ({unmatch} smudges)");
+                return (r + 1) * 100;
+            }
         }
-    }
-    0
+        for c in 0..(cols - 1) {
+            let mut unmatch = 0;
+            (0..rows).for_each(|r| {
+                for (c1, c2) in (0..=c).rev().zip((c + 1)..cols) {
+                    //println!("({r}, {c1}) vs ({r}, {c2})");
+                    if p[r][c1] != p[r][c2] {
+                        unmatch += 1;
+                    }
+                    if unmatch > smudges {
+                        return;
+                    }
+                }
+            });
+            if unmatch == smudges {
+                //println!("col {c} is mirror");
+                return c + 1;
+            }
+        }
+        0
+    })
 }
 
 #[test]
