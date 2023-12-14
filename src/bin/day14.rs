@@ -321,6 +321,7 @@ where
     }
     account_map(&map)
 }
+// Returns Some(start, period) of detected cycle
 fn cycle_detect<T>(seq: &[T]) -> Option<(usize, usize)>
 where
     T: Eq,
