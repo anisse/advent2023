@@ -72,49 +72,48 @@ enum Dir {
 fn map_move_dir(map: &mut [Vec<char>], dir: Dir) {
     let rows = map.len();
     let cols = map[0].len();
-    for c in dir_first_range(dir, rows, cols) {
-        let mut first_empty_row: Option<_> = None;
+    for i_vec1 in dir_vec1_range(dir, rows, cols) {
+        let mut first_empty_j_vec2: Option<_> = None;
         let mut moved_rocks = 0;
-        for r in dir_second_range(dir, rows, cols) {
-            match dir_map_get(dir, map, r, c) {
+        for j_vec2 in dir_vec2_range(dir, rows, cols) {
+            match dir_map_get(dir, map, j_vec2, i_vec1) {
                 '.' => {
-                    if first_empty_row.is_none() {
-                        first_empty_row = Some(r);
+                    if first_empty_j_vec2.is_none() {
+                        first_empty_j_vec2 = Some(j_vec2);
                     }
                 }
                 'O' => {
-                    if first_empty_row.is_some() {
+                    if first_empty_j_vec2.is_some() {
                         // clear this rock, it will move
-                        //map[r][c] = '.';
-                        dir_map_set(dir, map, r, c, '.');
+                        dir_map_set(dir, map, j_vec2, i_vec1, '.');
                         moved_rocks += 1;
                     }
                 }
                 '#' => {
                     /*
-                    if let Some(first_row) = first_empty_row {
+                    if let Some(first_j_vec2) = first_empty_j_vec2 {
                         println!(
-                            "Moving in dir {dir:?},  c1={r}, c2={c} moving {moved_rocks} rocks from c = {first_row}"
+                            "Moving in dir {dir:?}, i={i_vec1}, j={j_vec2} moving {moved_rocks} rocks from c = {first_j_vec2}"
                         );
                     }
                     */
-                    move_rocks_dir(dir, map, c, &mut first_empty_row, &mut moved_rocks);
+                    move_rocks_dir(dir, map, i_vec1, &mut first_empty_j_vec2, &mut moved_rocks);
                 }
                 _ => unreachable!(),
             }
         }
-        move_rocks_dir(dir, map, c, &mut first_empty_row, &mut moved_rocks);
+        move_rocks_dir(dir, map, i_vec1, &mut first_empty_j_vec2, &mut moved_rocks);
     }
 }
-fn dir_first_range<'a>(d: Dir, rows: usize, cols: usize) -> Box<dyn Iterator<Item = usize> + 'a> {
-    match d {
-        Dir::North => Box::new(0..cols),
-        Dir::West => Box::new(0..rows),
-        Dir::South => Box::new(0..cols),
-        Dir::East => Box::new(0..rows),
-    }
+fn dir_vec1_range<'a>(d: Dir, rows: usize, cols: usize) -> Box<dyn Iterator<Item = usize> + 'a> {
+    Box::new(match d {
+        Dir::North => 0..cols,
+        Dir::West => 0..rows,
+        Dir::South => 0..cols,
+        Dir::East => 0..rows,
+    })
 }
-fn dir_second_range<'a>(d: Dir, rows: usize, cols: usize) -> Box<dyn Iterator<Item = usize> + 'a> {
+fn dir_vec2_range<'a>(d: Dir, rows: usize, cols: usize) -> Box<dyn Iterator<Item = usize> + 'a> {
     match d {
         Dir::North => Box::new(0..rows),
         Dir::West => Box::new(0..cols),
@@ -128,10 +127,10 @@ fn dir_map_get(d: Dir, map: &[Vec<char>], c1: usize, c2: usize) -> char {
         Dir::West | Dir::East => map[c2][c1],
     }
 }
-fn dir_map_set(d: Dir, map: &mut [Vec<char>], c1: usize, c2: usize, val: char) {
+fn dir_map_set(d: Dir, map: &mut [Vec<char>], j_vec2: usize, i_vec1: usize, val: char) {
     match d {
-        Dir::North | Dir::South => map[c1][c2] = val,
-        Dir::West | Dir::East => map[c2][c1] = val,
+        Dir::North | Dir::South => map[j_vec2][i_vec1] = val,
+        Dir::West | Dir::East => map[i_vec1][j_vec2] = val,
     }
 }
 fn dir_map_inc(d: Dir, coord: usize) -> usize {
@@ -144,17 +143,17 @@ fn dir_map_inc(d: Dir, coord: usize) -> usize {
 fn move_rocks_dir(
     dir: Dir,
     map: &mut [Vec<char>],
-    c: usize,
-    first_rock_row: &mut Option<usize>,
+    i_vec1: usize,
+    first_empty_j_vec2: &mut Option<usize>,
     rocks: &mut usize,
 ) {
-    if let Some(mut first_row) = first_rock_row {
+    if let Some(mut j_vec2) = first_empty_j_vec2 {
         while *rocks > 0 {
-            dir_map_set(dir, map, first_row, c, 'O');
-            first_row = dir_map_inc(dir, first_row);
+            dir_map_set(dir, map, j_vec2, i_vec1, 'O');
+            j_vec2 = dir_map_inc(dir, j_vec2);
             *rocks -= 1;
         }
-        *first_rock_row = None;
+        *first_empty_j_vec2 = None;
     }
 }
 
@@ -232,13 +231,13 @@ O..#.OO...
 
 fn one_cycle(map: &mut [Vec<char>]) {
     map_move_dir(map, Dir::North);
-    //print_map(map);
+    //_print_map(map);
     map_move_dir(map, Dir::West);
-    //print_map(map);
+    //_print_map(map);
     map_move_dir(map, Dir::South);
-    //print_map(map);
+    //_print_map(map);
     map_move_dir(map, Dir::East);
-    //print_map(map);
+    //_print_map(map);
 }
 
 #[test]
@@ -295,14 +294,12 @@ O.#..O.#.#
     }
 }
 
-/*
-fn print_map(map: &[Vec<char>]) {
+fn _print_map(map: &[Vec<char>]) {
     map.iter().for_each(|l| {
         l.iter().for_each(|c| print!("{c}"));
         println!();
     })
 }
-*/
 
 fn part2<I>(things: I) -> usize
 where
