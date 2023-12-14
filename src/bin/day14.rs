@@ -295,12 +295,14 @@ O.#..O.#.#
     }
 }
 
+/*
 fn print_map(map: &[Vec<char>]) {
     map.iter().for_each(|l| {
         l.iter().for_each(|c| print!("{c}"));
         println!();
     })
 }
+*/
 
 fn part2<I>(things: I) -> usize
 where
@@ -308,7 +310,7 @@ where
 {
     let mut map: Vec<_> = things.collect();
     let mut seq = vec![];
-    for i in 0..1_000_000_000 {
+    for _i in 0..1_000_000_000 {
         //let prev_map = map.clone();
         one_cycle(&mut map);
         /*
@@ -319,13 +321,10 @@ where
         */
         seq.push(map.clone());
         if let Some((start, period)) = cycle_detect(&seq) {
-            println!("Cycle detected: starts at i={start} period of {period}",);
-            if i % period == 0 {
-                println!("cycle coucou");
-            }
+            //println!("Cycle detected: starts at i={start} period of {period}",);
             return account_map(&seq[start..][(1_000_000_000 - start - 1) % period]);
         }
-        println!("At cycle {i}, got {} load", account_map(&map));
+        //println!("At cycle {_i}, got {} load", account_map(&map));
     }
     account_map(&map)
 }
