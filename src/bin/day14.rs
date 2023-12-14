@@ -134,10 +134,10 @@ fn dir_map_set(d: Dir, map: &mut [Vec<char>], c1: usize, c2: usize, val: char) {
         Dir::West | Dir::East => map[c2][c1] = val,
     }
 }
-fn dir_map_inc(d: Dir) -> i8 {
+fn dir_map_inc(d: Dir, coord: usize) -> usize {
     match d {
-        Dir::North | Dir::West => 1,
-        Dir::South | Dir::East => -1,
+        Dir::North | Dir::West => coord + 1,
+        Dir::South | Dir::East => coord - 1,
     }
 }
 
@@ -151,7 +151,7 @@ fn move_rocks_dir(
     if let Some(mut first_row) = first_rock_row {
         while *rocks > 0 {
             dir_map_set(dir, map, first_row, c, 'O');
-            first_row = (first_row as isize + dir_map_inc(dir) as isize) as usize;
+            first_row = dir_map_inc(dir, first_row);
             *rocks -= 1;
         }
         *first_rock_row = None;
