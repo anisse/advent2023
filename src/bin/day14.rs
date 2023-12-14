@@ -69,42 +69,6 @@ enum Dir {
     East,
 }
 
-fn map_move_north(map: &mut [Vec<char>]) {
-    let rows = map.len();
-    let cols = map[0].len();
-    for c in 0..cols {
-        let mut first_empty_row: Option<_> = None;
-        let mut moved_rocks = 0;
-        for r in 0..rows {
-            match map[r][c] {
-                '.' => {
-                    if first_empty_row.is_none() {
-                        first_empty_row = Some(r);
-                    }
-                }
-                'O' => {
-                    if first_empty_row.is_some() {
-                        // clear this rock, it will move
-                        map[r][c] = '.';
-                        moved_rocks += 1;
-                    }
-                }
-                '#' => {
-                    if let Some(first_row) = first_empty_row {
-                        /*
-                        println!(
-                            "at row {r}, col {c} moving {moved_rocks} rocks from row {first_row}"
-                        );
-                        */
-                    }
-                    move_rocks_north(map, c, &mut first_empty_row, &mut moved_rocks);
-                }
-                _ => unreachable!(),
-            }
-        }
-        move_rocks_north(map, c, &mut first_empty_row, &mut moved_rocks);
-    }
-}
 fn map_move_dir(map: &mut [Vec<char>], dir: Dir) {
     let rows = map.len();
     let cols = map[0].len();
@@ -177,21 +141,6 @@ fn dir_map_inc(d: Dir) -> i8 {
     }
 }
 
-fn move_rocks_north(
-    map: &mut [Vec<char>],
-    c: usize,
-    first_rock_row: &mut Option<usize>,
-    rocks: &mut usize,
-) {
-    if let Some(mut first_row) = first_rock_row {
-        while *rocks > 0 {
-            map[first_row][c] = 'O';
-            first_row += 1;
-            *rocks -= 1;
-        }
-        *first_rock_row = None;
-    }
-}
 fn move_rocks_dir(
     dir: Dir,
     map: &mut [Vec<char>],
@@ -237,9 +186,6 @@ O..#.OO...
 #....#....",
     )
     .collect();
-    let mut map_moved = map.clone();
-    map_move_north(&mut map_moved);
-    assert_eq!(map_moved, map2);
     let mut map_moved = map.clone();
     map_move_dir(&mut map_moved, Dir::North);
     assert_eq!(map_moved, map2);
