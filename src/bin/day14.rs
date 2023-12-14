@@ -105,13 +105,13 @@ fn map_move_dir(map: &mut [Vec<char>], dir: Dir) {
         move_rocks_dir(dir, map, i_vec1, &mut first_empty_j_vec2, &mut moved_rocks);
     }
 }
-fn dir_vec1_range<'a>(d: Dir, rows: usize, cols: usize) -> Box<dyn Iterator<Item = usize> + 'a> {
-    Box::new(match d {
+fn dir_vec1_range(d: Dir, rows: usize, cols: usize) -> impl Iterator<Item = usize> {
+    match d {
         Dir::North => 0..cols,
         Dir::West => 0..rows,
         Dir::South => 0..cols,
         Dir::East => 0..rows,
-    })
+    }
 }
 fn dir_vec2_range<'a>(d: Dir, rows: usize, cols: usize) -> Box<dyn Iterator<Item = usize> + 'a> {
     match d {
