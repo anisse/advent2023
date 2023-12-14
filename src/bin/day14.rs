@@ -67,6 +67,121 @@ enum Dir {
     East,
 }
 
+fn map_move_north(map: &mut [Vec<char>]) {
+    let rows = map.len();
+    let cols = map[0].len();
+    for c in 0..cols {
+        let mut first_empty_row: Option<_> = None;
+        let mut moved_rocks = 0;
+        for r in 0..rows {
+            match map[r][c] {
+                '.' => {
+                    if first_empty_row.is_none() {
+                        first_empty_row = Some(r);
+                    }
+                }
+                'O' => {
+                    if first_empty_row.is_some() {
+                        // clear this rock, it will move
+                        map[r][c] = '.';
+                        moved_rocks += 1;
+                    }
+                }
+                '#' => {
+                    if let Some(first_row) = first_empty_row {
+                        println!(
+                            "at row {r}, col {c} moving {moved_rocks} rocks from row {first_row}"
+                        );
+                    }
+                    move_rocks(map, c, &mut first_empty_row, &mut moved_rocks, rows);
+                }
+                _ => unreachable!(),
+            }
+        }
+        move_rocks(map, c, &mut first_empty_row, &mut moved_rocks, rows);
+    }
+}
+
+fn move_rocks(
+    map: &mut [Vec<char>],
+    c: usize,
+    first_rock_row: &mut Option<usize>,
+    rocks: &mut usize,
+    rows: usize,
+) {
+    if let Some(mut first_row) = first_rock_row {
+        while *rocks > 0 {
+            map[first_row][c] = 'O';
+            first_row += 1;
+            *rocks -= 1;
+        }
+        *first_rock_row = None;
+    }
+}
+
+#[test]
+fn test_move() {
+    let mut map: Vec<_> = parse(
+        "O....#....
+O.OO#....#
+.....##...
+OO.#O....O
+.O.....O#.
+O.#..O.#.#
+..O..#O..O
+.......O..
+#....###..
+#OO..#....",
+    )
+    .collect();
+    let map2: Vec<_> = parse(
+        "OOOO.#.O..
+OO..#....#
+OO..O##..O
+O..#.OO...
+........#.
+..#....#.#
+..O..#.O.O
+..O.......
+#....###..
+#....#....",
+    )
+    .collect();
+    map_move_north(&mut map);
+    assert_eq!(map, map2);
+}
+
+fn account_map(map: &[Vec<char>]) -> usize {
+    let rows = map.len();
+    map.iter()
+        .enumerate()
+        .map(|(r, l)| {
+            l.iter()
+                .filter(|c| **c == 'O')
+                .map(|_| rows - r)
+                .sum::<usize>()
+        })
+        .sum()
+}
+
+#[test]
+fn test_accounting() {
+    let map: Vec<_> = parse(
+        "OOOO.#.O..
+OO..#....#
+OO..O##..O
+O..#.OO...
+........#.
+..#....#.#
+..O..#.O.O
+..O.......
+#....###..
+#....#....",
+    )
+    .collect();
+    assert_eq!(account_map(&map), 136);
+}
+
 fn part2<I>(things: I) -> usize
 where
     I: Iterator<Item = ParsedItem>,
@@ -84,6 +199,8 @@ fn test() {
     let res = part1(things.clone());
     assert_eq!(res, 136);
     //part 2
+    /*
     let res = part2(things);
     assert_eq!(res, 42);
+    */
 }
