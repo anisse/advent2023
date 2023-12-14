@@ -309,6 +309,9 @@ where
     let mut seq = vec![];
     for _i in 0..1_000_000_000 {
         one_cycle(&mut map);
+        /* we could use much less memory by using a sligthly stronger hash
+        than what account_map returns, saving both account_map and the
+        hash, instead of the full map copy */
         seq.push(map.clone());
         if let Some((start, period)) = cycle_detect(&seq) {
             //println!("Cycle detected: starts at i={start} period of {period}",);
