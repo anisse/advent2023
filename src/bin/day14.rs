@@ -24,7 +24,7 @@ where
     for c in 0..cols {
         let mut first_rock_row: Option<_> = None;
         let mut rocks = 0;
-        for r in 0..rows {
+        (0..rows).for_each(|r| {
             if matches!(map[r][c], '.' | 'O') && first_rock_row.is_none() {
                 first_rock_row = Some(r);
             }
@@ -41,7 +41,7 @@ where
                 }
                 _ => unreachable!(),
             }
-        }
+        });
         sum += account_rocks(&mut first_rock_row, &mut rocks, rows);
     }
     sum
@@ -323,7 +323,7 @@ where
             if i % period == 0 {
                 println!("cycle coucou");
             }
-            return account_map(&seq[start..][((1_000_000_000 - start - 1) % period)]);
+            return account_map(&seq[start..][(1_000_000_000 - start - 1) % period]);
         }
         println!("At cycle {i}, got {} load", account_map(&map));
     }
