@@ -292,7 +292,7 @@ fn one_cycle(map: &mut [Vec<char>]) {
     map_move_dir(map, Dir::South);
     //print_map(map);
     map_move_dir(map, Dir::East);
-    print_map(map);
+    //print_map(map);
 }
 
 #[test]
@@ -371,22 +371,22 @@ where
             return account_map(&map);
         }
         */
-        seq.push(account_map(&map));
+        seq.push(map.clone());
         if let Some((start, period)) = cycle_detect(&seq) {
-            println!(
-                "Cycle detected: starts at i={start} (val={}, period of {period})",
-                seq[start]
-            );
+            println!("Cycle detected: starts at i={start} period of {period}",);
             if i % period == 0 {
                 println!("cycle coucou");
             }
-            return seq[start..][1_000_000_000 % period];
+            return account_map(&seq[start..][((1_000_000_000 - start - 1) % period)]);
         }
         println!("At cycle {i}, got {} load", account_map(&map));
     }
     account_map(&map)
 }
-fn cycle_detect(seq: &[usize]) -> Option<(usize, usize)> {
+fn cycle_detect<T>(seq: &[T]) -> Option<(usize, usize)>
+where
+    T: Eq,
+{
     // basic floyd tortoise and hare implementation
     let mut tor = 0;
     let mut har = 0;
