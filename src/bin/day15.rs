@@ -10,7 +10,7 @@ fn main() {
 }
 type ParsedItem = String;
 fn parse(input: &str) -> impl Iterator<Item = ParsedItem> + Clone + '_ {
-    input.split(',').map(|s| s.to_string())
+    input.trim_end().split(',').map(|s| s.to_string())
 }
 
 fn hash(s: String) -> usize {
