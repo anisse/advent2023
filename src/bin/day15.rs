@@ -23,14 +23,51 @@ where
     things.map(hash).sum()
 }
 
-fn part2<I>(things: I) -> usize
+fn part2<I>(seq: I) -> usize
 where
     I: Iterator<Item = ParsedItem>,
 {
-    for _ in things {
-        todo!()
+    let mut boxes: Vec<Vec<(String, u8)>> = vec![vec![]; 256];
+    for ins in seq {
+        let (label, num) = ins
+            .split_once(|c| c == '-' || c == '=')
+            .expect("no separator");
+        let label = label.to_string();
+        let h = hash(label.clone());
+        match num {
+            // -
+            "" => {
+                boxes[h].retain(|(l, _)| *l != label);
+            }
+            // =
+            _ => {
+                let num = num.parse::<u8>().expect("an integer");
+
+                if let Some(i) =
+                    boxes[h]
+                        .iter()
+                        .enumerate()
+                        .find_map(|(i, (l, _))| if *l == label { Some(i) } else { None })
+                {
+                    // replace
+                    boxes[h][i] = (label, num);
+                } else {
+                    // insert at the end
+                    boxes[h].push((label, num));
+                }
+            }
+        }
     }
-    42
+    boxes
+        .iter()
+        .enumerate()
+        .map(|(boxi, b)| {
+            b.iter()
+                .enumerate()
+                .map(|(lensi, (_, n))| (boxi + 1) * (lensi + 1) * *n as usize)
+                .sum::<usize>()
+        })
+        .sum()
 }
 
 #[test]
@@ -40,8 +77,6 @@ fn test() {
     let res = part1(things.clone());
     assert_eq!(res, 1320);
     //part 2
-    /*
     let res = part2(things);
-    assert_eq!(res, 42);
-    */
+    assert_eq!(res, 145);
 }
