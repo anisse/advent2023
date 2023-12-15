@@ -72,7 +72,7 @@ where
 
 #[test]
 fn test() {
-    let things = parse("rn=1,cm-,qp=3,cm=2,qp-,pc=4,ot=9,ab=5,pc-,pc=6,ot=7");
+    let things = parse(sample!());
     //part 1
     let res = part1(things.clone());
     assert_eq!(res, 1320);
