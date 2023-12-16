@@ -22,14 +22,9 @@ fn parse(input: &str) -> Map {
     input.lines().map(|x| x.as_bytes().to_vec()).collect()
 }
 fn part1(map: MapRef) -> usize {
-    let mut seen_dir = vec![vec![0; map[0].len()]; map.len()];
     let pos = Pos { row: 0, col: 0 };
     let dir = RIGHT;
-    visit_all(map, &mut seen_dir, pos, dir);
-    seen_dir
-        .iter()
-        .map(|l| l.iter().filter(|c| **c != 0).count())
-        .sum()
+    common_part(map, pos, dir)
 }
 
 const RIGHT: u8 = 0;
@@ -113,6 +108,15 @@ fn next_dirs(dir: u8, c: u8) -> Vec<u8> {
     }
 }
 
+fn common_part(map: MapRef, pos: Pos, dir: u8) -> usize {
+    let mut seen_dir = vec![vec![0; map[0].len()]; map.len()];
+    visit_all(map, &mut seen_dir, pos, dir);
+    seen_dir
+        .iter()
+        .map(|l| l.iter().filter(|c| **c != 0).count())
+        .sum()
+}
+
 fn part2(map: MapRef) -> usize {
     let rows = map.len();
     let cols = map[0].len();
@@ -123,14 +127,7 @@ fn part2(map: MapRef) -> usize {
                 (RIGHT, Pos { row, col: 0 }),
             ]
             .iter()
-            .map(|(dir, pos)| {
-                let mut seen_dir = vec![vec![0; map[0].len()]; map.len()];
-                visit_all(map, &mut seen_dir, pos.clone(), *dir);
-                seen_dir
-                    .iter()
-                    .map(|l| l.iter().filter(|c| **c != 0).count())
-                    .sum()
-            })
+            .map(|(dir, pos)| common_part(map, pos.clone(), *dir))
             .max()
             .unwrap()
         })
@@ -143,14 +140,7 @@ fn part2(map: MapRef) -> usize {
                 (DOWN, Pos { row: 0, col }),
             ]
             .iter()
-            .map(|(dir, pos)| {
-                let mut seen_dir = vec![vec![0; map[0].len()]; map.len()];
-                visit_all(map, &mut seen_dir, pos.clone(), *dir);
-                seen_dir
-                    .iter()
-                    .map(|l| l.iter().filter(|c| **c != 0).count())
-                    .sum()
-            })
+            .map(|(dir, pos)| common_part(map, pos.clone(), *dir))
             .max()
             .unwrap()
         })
