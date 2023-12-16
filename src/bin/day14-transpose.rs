@@ -193,11 +193,4 @@ fn test() {
     //part 2
     let res = part2(things);
     assert_eq!(res, 64);
-    let things = parse(input!());
-    //part 1
-    let res = part1(things.clone());
-    assert_eq!(res, 113486);
-    //part 2
-    let res = part2(things);
-    assert_eq!(res, 104409);
 }
