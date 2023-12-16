@@ -25,7 +25,6 @@ fn part1(map: MapRef) -> usize {
     let mut seen_dir = vec![vec![0; map[0].len()]; map.len()];
     let pos = Pos { row: 0, col: 0 };
     let dir = RIGHT;
-    println!("RIGHT is {dir}");
     visit_all(map, &mut seen_dir, pos, dir);
     seen_dir
         .iter()
@@ -38,7 +37,7 @@ const DOWN: u8 = 1;
 const LEFT: u8 = 2;
 const UP: u8 = 3;
 
-fn print_seen(seen: MapRef) {
+fn _print_seen(seen: MapRef) {
     seen.iter().for_each(|l| {
         l.iter().for_each(|c| print!("{c}"));
         println!();
@@ -51,7 +50,7 @@ fn visit_all(map: MapRef, seen: MapRefMut, pos: Pos, dir: u8) {
     }
     /*
     println!("Now at {pos:?}, dir is {dir}");
-    print_seen(seen);
+    _print_seen(seen);
     */
     seen[pos.row][pos.col] |= 1 << dir;
     let current = map[pos.row][pos.col];
@@ -118,16 +117,10 @@ fn part2(map: MapRef) -> usize {
     let rows = map.len();
     let cols = map[0].len();
     let max_r: usize = (0..rows)
-        .map(|r| {
+        .map(|row| {
             [
-                (
-                    LEFT,
-                    Pos {
-                        row: r,
-                        col: cols - 1,
-                    },
-                ),
-                (RIGHT, Pos { row: r, col: 0 }),
+                (LEFT, Pos { row, col: cols - 1 }),
+                (RIGHT, Pos { row, col: 0 }),
             ]
             .iter()
             .map(|(dir, pos)| {
@@ -144,16 +137,10 @@ fn part2(map: MapRef) -> usize {
         .max()
         .unwrap();
     let max_c = (0..cols)
-        .map(|c| {
+        .map(|col| {
             [
-                (
-                    UP,
-                    Pos {
-                        row: rows - 1,
-                        col: c,
-                    },
-                ),
-                (DOWN, Pos { row: 0, col: c }),
+                (UP, Pos { row: rows - 1, col }),
+                (DOWN, Pos { row: 0, col }),
             ]
             .iter()
             .map(|(dir, pos)| {
