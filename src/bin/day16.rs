@@ -49,13 +49,13 @@ fn visit_all(map: MapRef, seen: MapRefMut, pos: Pos, dir: u8) {
     */
     seen[pos.row][pos.col] |= 1 << dir;
     let current = map[pos.row][pos.col];
-    let next: Vec<_> = match current {
-        b'.' => vec![dir],
-        b'/' | b'\\' => vec![next_dir(dir, current)],
+    let next: NextDir = match current {
+        b'.' => [Some(dir), None],
+        b'/' | b'\\' => next_dir(dir, current),
         b'-' | b'|' => next_dirs(dir, current),
         _ => unreachable!(),
     };
-    for dir in next.iter() {
+    for dir in next.iter().flatten() {
         if let Some(next) = next_pos(pos.clone(), *dir, map) {
             visit_all(map, seen, next, *dir);
         }
@@ -77,23 +77,25 @@ fn next_pos(pos: Pos, dir: u8, map: MapRef) -> Option<Pos> {
     })
 }
 
-fn next_dir(dir: u8, c: u8) -> u8 {
+type NextDir = [Option<u8>; 2];
+fn next_dir(dir: u8, c: u8) -> NextDir {
     let inc_backslash = [1, -1, 1, -1];
-    ((dir as i8
+    let next = ((dir as i8
         + match c {
             b'\\' => inc_backslash[dir as usize],
             b'/' => -inc_backslash[dir as usize],
             _ => unreachable!(),
         }
         + 4)
-        % 4) as u8
+        % 4) as u8;
+    [Some(next), None]
 }
-fn next_dirs(dir: u8, c: u8) -> Vec<u8> {
-    let split = vec![(dir + 1) % 4, (dir + 3) % 4];
-    let res_split_dash = [vec![dir], split];
+fn next_dirs(dir: u8, c: u8) -> NextDir {
+    let split = [Some((dir + 1) % 4), Some((dir + 3) % 4)];
+    let split_dirs = [[Some(dir), None], split];
     match c {
-        b'-' => res_split_dash[dir as usize % 2].clone(),
-        b'|' => res_split_dash[(dir as usize + 1) % 2].clone(),
+        b'-' => split_dirs[dir as usize % 2],
+        b'|' => split_dirs[(dir as usize + 1) % 2],
         _ => unreachable!(),
     }
 }
