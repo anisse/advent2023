@@ -78,11 +78,11 @@ fn next_pos(pos: Pos, dir: u8, map: MapRef) -> Option<Pos> {
 }
 
 fn next_dir(dir: u8, c: u8) -> u8 {
-    let inc_slash = [1, -1, 1, -1];
+    let inc_backslash = [1, -1, 1, -1];
     ((dir as i8
         + match c {
-            b'\\' => inc_slash[dir as usize],
-            b'/' => -inc_slash[dir as usize],
+            b'\\' => inc_backslash[dir as usize],
+            b'/' => -inc_backslash[dir as usize],
             _ => unreachable!(),
         }
         + 4)
