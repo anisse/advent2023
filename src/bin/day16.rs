@@ -49,26 +49,16 @@ fn visit_all(map: MapRef, seen: MapRefMut, pos: Pos, dir: u8) {
     */
     seen[pos.row][pos.col] |= 1 << dir;
     let current = map[pos.row][pos.col];
-    match current {
-        b'.' => {
-            if let Some(next) = next_pos(pos, dir, map) {
-                visit_all(map, seen, next, dir);
-            }
-        }
-        b'/' | b'\\' => {
-            let dir = next_dir(dir, current);
-            if let Some(next) = next_pos(pos, dir, map) {
-                visit_all(map, seen, next, dir);
-            }
-        }
-        b'-' | b'|' => {
-            for dir in next_dirs(dir, current).iter() {
-                if let Some(next) = next_pos(pos.clone(), *dir, map) {
-                    visit_all(map, seen, next, *dir);
-                }
-            }
-        }
+    let next: Vec<_> = match current {
+        b'.' => vec![dir],
+        b'/' | b'\\' => vec![next_dir(dir, current)],
+        b'-' | b'|' => next_dirs(dir, current),
         _ => unreachable!(),
+    };
+    for dir in next.iter() {
+        if let Some(next) = next_pos(pos.clone(), *dir, map) {
+            visit_all(map, seen, next, *dir);
+        }
     }
 }
 fn next_pos(pos: Pos, dir: u8, map: MapRef) -> Option<Pos> {
