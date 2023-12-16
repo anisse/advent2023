@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use advent2023::*;
 fn main() {
     let things = parse(input!());
@@ -306,59 +308,20 @@ where
     I: Iterator<Item = ParsedItem>,
 {
     let mut map: Vec<_> = things.collect();
-    let mut seq = vec![];
-    for _i in 0..1_000_000_000 {
+    let mut seen = HashMap::new();
+    let mut history: Vec<Vec<Vec<char>>> = vec![];
+    for i in 0..1_000_000_000 {
         one_cycle(&mut map);
-        /* we could use much less memory by using a sligthly stronger hash
-        than what account_map returns, saving both account_map and the
-        hash, instead of the full map copy */
-        seq.push(map.clone());
-        if let Some((start, period)) = cycle_detect(&seq) {
+        if let Some(start) = seen.get(&map) {
+            let period = i - *start;
             //println!("Cycle detected: starts at i={start} period of {period}",);
-            return account_map(&seq[start..][(1_000_000_000 - start - 1) % period]);
+            return account_map(&history[*start..][(1_000_000_000 - start - 1) % period]);
         }
+        seen.insert(map.clone(), i);
+        history.push(map.clone());
         //println!("At cycle {_i}, got {} load", account_map(&map));
     }
     account_map(&map)
-}
-// Returns Some(start, period) of detected cycle
-fn cycle_detect<T>(seq: &[T]) -> Option<(usize, usize)>
-where
-    T: Eq,
-{
-    // basic floyd tortoise and hare implementation
-    let mut tor = 0;
-    let mut har = 0;
-    loop {
-        har += 2;
-        tor += 1;
-        if har >= seq.len() || tor >= seq.len() {
-            return None;
-        }
-        if seq[har] == seq[tor] {
-            break;
-        }
-    }
-    let mut mu = 0;
-    tor = 0;
-    while seq[tor] != seq[har] {
-        tor += 1;
-        har += 1;
-        mu += 1;
-        if har >= seq.len() || tor >= seq.len() {
-            return None;
-        }
-    }
-    let mut lam = 1;
-    har = tor + 1;
-    while seq[tor] != seq[har] {
-        if har >= seq.len() {
-            return None;
-        }
-        har += 1;
-        lam += 1;
-    }
-    Some((mu, lam))
 }
 
 #[test]
