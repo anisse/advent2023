@@ -49,19 +49,19 @@ fn visit_all(map: MapRef, seen: MapRefMut, pos: Pos, dir: u8) {
     */
     seen[pos.row][pos.col] |= 1 << dir;
     let current = map[pos.row][pos.col];
-    let next: NextDir = match current {
+    let next_dirs: NextDir = match current {
         b'.' => [Some(dir), None],
-        b'/' | b'\\' => next_dir(dir, current),
-        b'-' | b'|' => next_dirs(dir, current),
+        b'/' | b'\\' => next_dir_diag(dir, current),
+        b'-' | b'|' => next_dir_straight(dir, current),
         _ => unreachable!(),
     };
-    for dir in next.iter().flatten() {
-        if let Some(next) = next_pos(pos.clone(), *dir, map) {
-            visit_all(map, seen, next, *dir);
+    for dir in next_dirs.iter().flatten() {
+        if let Some(next_pos) = next_pos(&pos, *dir, map) {
+            visit_all(map, seen, next_pos, *dir);
         }
     }
 }
-fn next_pos(pos: Pos, dir: u8, map: MapRef) -> Option<Pos> {
+fn next_pos(pos: &Pos, dir: u8, map: MapRef) -> Option<Pos> {
     let rows = map.len() as isize;
     let cols = map[0].len() as isize;
     let inc = [(0, 1), (1, 0), (0, -1), (-1, 0)][dir as usize];
@@ -78,7 +78,7 @@ fn next_pos(pos: Pos, dir: u8, map: MapRef) -> Option<Pos> {
 }
 
 type NextDir = [Option<u8>; 2];
-fn next_dir(dir: u8, c: u8) -> NextDir {
+fn next_dir_diag(dir: u8, c: u8) -> NextDir {
     let inc_backslash = [1, -1, 1, -1];
     let next = ((dir as i8
         + match c {
@@ -90,7 +90,7 @@ fn next_dir(dir: u8, c: u8) -> NextDir {
         % 4) as u8;
     [Some(next), None]
 }
-fn next_dirs(dir: u8, c: u8) -> NextDir {
+fn next_dir_straight(dir: u8, c: u8) -> NextDir {
     let split = [Some((dir + 1) % 4), Some((dir + 3) % 4)];
     let split_dirs = [[Some(dir), None], split];
     match c {
