@@ -1,5 +1,6 @@
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
+use std::ops::Range;
 
 use advent2023::*;
 fn main() {
@@ -21,9 +22,9 @@ fn parse(input: &str) -> Map {
         .collect()
 }
 fn part1(map: MapRef) -> usize {
-    shortest_path_three(map)
+    shortest_path_common(map, 0..3)
 }
-fn shortest_path_three(map: MapRef) -> usize {
+fn shortest_path_common(map: MapRef, move_range: Range<usize>) -> usize {
     let mut cost_map = vec![vec![Cost::default(); map[0].len()]; map.len()];
     let mut queue = BinaryHeap::new();
     //let mut mincost = usize::MAX;
@@ -66,14 +67,23 @@ fn shortest_path_three(map: MapRef) -> usize {
             continue;
             */
         }
+        if cur.cost % 25 == 0 {
+            println!("Cost {}", cur.cost);
+        }
         for dir in 0..4 {
             if dir == cur.dir || (dir + 2) % 4 == cur.dir {
                 continue;
             }
-            let mut p1 = cur.pos.clone();
             let mut cost = cur.cost;
-            for _last_cur_dir in 0..3 {
-                if let Some(pos) = next_pos(&p1, dir, map) {
+            for advance in 0..(move_range.start) {
+                if let Some(pos) = next_pos(&cur.pos, dir, map, advance + 1) {
+                    cost += map[pos.row][pos.col] as usize;
+                } else {
+                    break;
+                }
+            }
+            for advance in move_range.clone() {
+                if let Some(pos) = next_pos(&cur.pos, dir, map, advance + 1) {
                     /*
                     let last_cur_dir = if dir == cur.dir {
                     cur.last_cur_dir + 1
@@ -87,7 +97,7 @@ fn shortest_path_three(map: MapRef) -> usize {
                     cost += map[pos.row][pos.col] as usize;
                     /*
                     println!(
-                        "For pos {pos:?} in dir {dir} (step {_last_cur_dir}, adding cost {}, total is {cost}",
+                        "For pos {pos:?} in dir {dir} (step {advance}, adding cost {}, total is {cost}",
                         map[pos.row][pos.col]
                     );
                     */
@@ -97,7 +107,6 @@ fn shortest_path_three(map: MapRef) -> usize {
                         cost,
                         //last_cur_dir,
                     }));
-                    p1 = pos;
                 } else {
                     break;
                 }
@@ -116,14 +125,14 @@ const RIGHT: u8 = 0;
 const DOWN: u8 = 1;
 const LEFT: u8 = 2;
 const UP: u8 = 3;
-fn next_pos(pos: &Pos, dir: u8, map: MapRef) -> Option<Pos> {
+fn next_pos(pos: &Pos, dir: u8, map: MapRef, advance: usize) -> Option<Pos> {
     let rows = map.len() as isize;
     let cols = map[0].len() as isize;
     let inc = [(0, 1), (1, 0), (0, -1), (-1, 0)][dir as usize];
     //println!("inc is {inc:?}, dir is {dir}");
-    let new_row = pos.row as isize + inc.0;
-    let new_col = pos.col as isize + inc.1;
-    if new_row < 0 || new_row == rows || new_col < 0 || new_col == cols {
+    let new_row = pos.row as isize + inc.0 * advance as isize;
+    let new_col = pos.col as isize + inc.1 * advance as isize;
+    if new_row < 0 || new_row >= rows || new_col < 0 || new_col >= cols {
         return None;
     }
     Some(Pos {
@@ -191,10 +200,7 @@ impl Default for Cost {
 */
 
 fn part2(map: MapRef) -> usize {
-    for _ in map {
-        todo!()
-    }
-    42
+    shortest_path_common(map, 3..10)
 }
 
 #[test]
@@ -204,8 +210,15 @@ fn test() {
     let res = part1(&map);
     assert_eq!(res, 102);
     //part 2
-    /*
     let res = part2(&map);
-    assert_eq!(res, 42);
-    */
+    assert_eq!(res, 94, "part 2 is wrong");
+
+    let map = parse(
+        "111111111111
+999999999991
+999999999991
+999999999991
+999999999991",
+    );
+    assert_eq!(part2(&map), 71);
 }
