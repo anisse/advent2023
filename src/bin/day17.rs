@@ -161,24 +161,24 @@ impl PartialOrd for State {
 
 #[derive(Debug, Clone)]
 struct Cost {
-    c: [u32; 4],
+    c: [u32; 2],
 }
 impl Default for Cost {
     fn default() -> Self {
-        Cost { c: [u32::MAX; 4] }
+        Cost { c: [u32::MAX; 2] }
     }
 }
 impl Cost {
     fn current(&self, dir: u8 /*last_cur_dir: u8*/) -> usize {
         assert!(dir < 4);
         //assert!(last_cur_dir < 3);
-        self.c[dir as usize] /* * 3 + last_cur_dir as usize]*/ as usize
+        self.c[dir as usize % 2] /* * 3 + last_cur_dir as usize]*/ as usize
     }
     fn set(&mut self, dir: u8, /*last_cur_dir: u8,*/ val: usize) {
         assert!(dir < 4);
         //assert!(last_cur_dir < 3);
         assert!(val < u32::MAX as usize);
-        self.c[dir as usize /* * 3 + last_cur_dir as usize*/] = val as u32;
+        self.c[dir as usize % 2 /* * 3 + last_cur_dir as usize*/] = val as u32;
     }
 }
 /*
