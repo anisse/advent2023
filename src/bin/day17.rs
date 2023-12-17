@@ -1,4 +1,5 @@
-use std::collections::VecDeque;
+use std::cmp::Reverse;
+use std::collections::BinaryHeap;
 
 use advent2023::*;
 fn main() {
@@ -20,26 +21,32 @@ fn parse(input: &str) -> Map {
         .collect()
 }
 fn part1(map: MapRef) -> usize {
-    let state = State {
-        pos: Pos { row: 0, col: 0 },
-        cost: 0,
-        dir: UP,
-        //last_cur_dir: 0,
-    };
-    shortest_path_three(map, &state)
+    shortest_path_three(map)
 }
-fn shortest_path_three(map: MapRef, state: &State) -> usize {
-    let mut cost_map = vec![vec![usize::MAX; map[0].len()]; map.len()];
-    let mut queue: VecDeque<State> = VecDeque::new();
-    let mut mincost = usize::MAX;
+fn shortest_path_three(map: MapRef) -> usize {
+    let mut cost_map = vec![vec![Cost::default(); map[0].len()]; map.len()];
+    let mut queue = BinaryHeap::new();
+    //let mut mincost = usize::MAX;
     let end = Pos {
         row: map.len() - 1,
         col: map[0].len() - 1,
     };
 
-    queue.push_back(state.clone());
+    let mut state = State {
+        pos: Pos { row: 0, col: 0 },
+        cost: 0,
+        dir: UP,
+        //last_cur_dir: 0,
+    };
+    queue.push(Reverse(state.clone()));
+    state.dir = LEFT;
+    queue.push(Reverse(state));
 
-    while let Some(cur) = queue.pop_front() {
+    while let Some(Reverse(cur)) = queue.pop() {
+        let cost_pos = &cost_map[cur.pos.row][cur.pos.col];
+        if cost_pos.current(cur.dir /*, cur.last_cur_dir*/) < cur.cost {
+            continue;
+        }
         /*
         println!(
             "Now evaluating pos {:?}, dir: {}, cost is {}",
@@ -48,25 +55,24 @@ fn shortest_path_three(map: MapRef, state: &State) -> usize {
             cur.cost, //cur.last_cur_dir,
         );
         */
-        let cost_pos = cost_map[cur.pos.row][cur.pos.col];
-        if cost_pos < cur.cost {
-            continue;
-        }
-        cost_map[cur.pos.row][cur.pos.col] = cur.cost;
+        cost_map[cur.pos.row][cur.pos.col].set(cur.dir, /*cur.last_cur_dir,*/ cur.cost);
         if cur.pos == end {
             //println!("END REACHED\n===============================\n");
+            return cur.cost;
+            /*
             if cur.cost < mincost {
                 mincost = cur.cost;
             }
             continue;
+            */
         }
         for dir in 0..4 {
-            if dir == cur.dir {
+            if dir == cur.dir || (dir + 2) % 4 == cur.dir {
                 continue;
             }
             let mut p1 = cur.pos.clone();
             let mut cost = cur.cost;
-            for _ in 0..3 {
+            for _last_cur_dir in 0..3 {
                 if let Some(pos) = next_pos(&p1, dir, map) {
                     /*
                     let last_cur_dir = if dir == cur.dir {
@@ -78,14 +84,19 @@ fn shortest_path_three(map: MapRef, state: &State) -> usize {
                     continue;
                     }
                     */
-                    //println!("For pos {pos:?}, adding cost {}", map[pos.row][pos.col]);
                     cost += map[pos.row][pos.col] as usize;
-                    queue.push_back(State {
+                    /*
+                    println!(
+                        "For pos {pos:?} in dir {dir} (step {_last_cur_dir}, adding cost {}, total is {cost}",
+                        map[pos.row][pos.col]
+                    );
+                    */
+                    queue.push(Reverse(State {
                         pos: pos.clone(),
                         dir,
                         cost,
                         //last_cur_dir,
-                    });
+                    }));
                     p1 = pos;
                 } else {
                     break;
@@ -93,7 +104,8 @@ fn shortest_path_three(map: MapRef, state: &State) -> usize {
             }
         }
     }
-    mincost
+    0
+    //mincost
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Pos {
@@ -120,38 +132,46 @@ fn next_pos(pos: &Pos, dir: u8, map: MapRef) -> Option<Pos> {
     })
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 struct State {
     pos: Pos,
     cost: usize,
     dir: u8,
     //last_cur_dir: u8,
 }
+impl Ord for State {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.cost.cmp(&other.cost)
+    }
+}
+impl PartialOrd for State {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
 
-/*
 #[derive(Debug, Clone)]
 struct Cost {
-    c: [u32; 12],
+    c: [u32; 4],
 }
 impl Default for Cost {
     fn default() -> Self {
-        Cost { c: [u32::MAX; 12] }
+        Cost { c: [u32::MAX; 4] }
     }
 }
 impl Cost {
-    fn current(&self, dir: u8, last_cur_dir: u8) -> usize {
+    fn current(&self, dir: u8 /*last_cur_dir: u8*/) -> usize {
         assert!(dir < 4);
-        assert!(last_cur_dir < 3);
-        self.c[dir as usize * 3 + last_cur_dir as usize] as usize
+        //assert!(last_cur_dir < 3);
+        self.c[dir as usize] /* * 3 + last_cur_dir as usize]*/ as usize
     }
-    fn set(&mut self, dir: u8, last_cur_dir: u8, val: usize) {
+    fn set(&mut self, dir: u8, /*last_cur_dir: u8,*/ val: usize) {
         assert!(dir < 4);
-        assert!(last_cur_dir < 3);
+        //assert!(last_cur_dir < 3);
         assert!(val < u32::MAX as usize);
-        self.c[dir as usize * 3 + last_cur_dir as usize] = val as u32;
+        self.c[dir as usize /* * 3 + last_cur_dir as usize*/] = val as u32;
     }
 }
-*/
 /*
 #[derive(Debug, Clone)]
 struct Cost {
