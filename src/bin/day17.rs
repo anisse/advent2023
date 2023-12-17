@@ -93,7 +93,7 @@ fn shortest_path_common(map: MapRef, move_range: Range<usize>) -> usize {
             }
         }
     }
-    0
+    usize::MAX
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Pos {
@@ -110,7 +110,6 @@ fn next_pos(pos: &Pos, dir: u8, map: MapRef, advance: usize) -> Option<Pos> {
     let rows = map.len() as isize;
     let cols = map[0].len() as isize;
     let inc = [(0, 1), (1, 0), (0, -1), (-1, 0)][dir as usize];
-    //println!("inc is {inc:?}, dir is {dir}");
     let new_row = pos.row as isize + inc.0 * advance as isize;
     let new_col = pos.col as isize + inc.1 * advance as isize;
     if new_row < 0 || new_row >= rows || new_col < 0 || new_col >= cols {
