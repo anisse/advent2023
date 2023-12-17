@@ -20,10 +20,10 @@ fn parse(input: &str) -> Map {
         .map(|l| l.as_bytes().iter().map(|x| x - b'0').collect())
         .collect()
 }
-fn part1(map: MapRef) -> usize {
+fn part1(map: MapRef) -> u32 {
     shortest_path_common(map, 0..3)
 }
-fn shortest_path_common(map: MapRef, move_range: Range<usize>) -> usize {
+fn shortest_path_common(map: MapRef, move_range: Range<usize>) -> u32 {
     let mut cost_map = vec![vec![Cost::default(); map[0].len()]; map.len()];
     let mut queue = BinaryHeap::new();
     let end = Pos {
@@ -68,14 +68,14 @@ fn shortest_path_common(map: MapRef, move_range: Range<usize>) -> usize {
             let mut cost = cur.cost;
             for advance in 0..(move_range.start) {
                 if let Some(pos) = next_pos(&cur.pos, dir, map, advance + 1) {
-                    cost += map[pos.row][pos.col] as usize;
+                    cost += map[pos.row][pos.col] as u32;
                 } else {
                     break;
                 }
             }
             for advance in move_range.clone() {
                 if let Some(pos) = next_pos(&cur.pos, dir, map, advance + 1) {
-                    cost += map[pos.row][pos.col] as usize;
+                    cost += map[pos.row][pos.col] as u32;
                     /*
                     println!(
                         "For pos {pos:?} in dir {dir} (step {advance}, adding cost {}, total is {cost}",
@@ -93,7 +93,7 @@ fn shortest_path_common(map: MapRef, move_range: Range<usize>) -> usize {
             }
         }
     }
-    usize::MAX
+    u32::MAX
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Pos {
@@ -124,7 +124,7 @@ fn next_pos(pos: &Pos, dir: u8, map: MapRef, advance: usize) -> Option<Pos> {
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct State {
     pos: Pos,
-    cost: usize,
+    cost: u32,
     dir: u8,
 }
 impl Ord for State {
@@ -148,18 +148,17 @@ impl Default for Cost {
     }
 }
 impl Cost {
-    fn current(&self, dir: u8) -> usize {
+    fn current(&self, dir: u8) -> u32 {
         assert!(dir < 4);
-        self.c[dir as usize % 2] as usize
+        self.c[dir as usize % 2]
     }
-    fn set(&mut self, dir: u8, val: usize) {
+    fn set(&mut self, dir: u8, val: u32) {
         assert!(dir < 4);
-        assert!(val < u32::MAX as usize);
-        self.c[dir as usize % 2] = val as u32;
+        self.c[dir as usize % 2] = val;
     }
 }
 
-fn part2(map: MapRef) -> usize {
+fn part2(map: MapRef) -> u32 {
     shortest_path_common(map, 3..10)
 }
 
