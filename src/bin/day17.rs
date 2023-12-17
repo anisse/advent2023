@@ -1,5 +1,5 @@
-use std::cmp::Reverse;
 use std::collections::BinaryHeap;
+use std::collections::HashMap;
 use std::ops::Range;
 
 use advent2023::*;
@@ -23,79 +23,84 @@ fn parse(input: &str) -> Map {
 fn part1(map: MapRef) -> u32 {
     shortest_path_common(map, 0..3)
 }
-fn shortest_path_common(map: MapRef, move_range: Range<usize>) -> u32 {
-    let mut cost_map = vec![vec![Cost::default(); map[0].len()]; map.len()];
-    let mut queue = BinaryHeap::new();
+fn shortest_path_common(map: MapRef, move_range: Range<u8>) -> u32 {
+    let mut cost_map = HashMap::new();
+    let mut queue = BinaryHeap::with_capacity(4096);
     let end = Pos {
         row: map.len() - 1,
         col: map[0].len() - 1,
     };
 
-    let mut state = State {
+    // Start at 0, cost 0. Fake as if we were going up (next is right), or left (next is down)
+    queue.push(State {
         pos: Pos { row: 0, col: 0 },
         cost: 0,
         dir: UP,
-    };
-    queue.push(Reverse(state.clone()));
-    state.dir = LEFT;
-    queue.push(Reverse(state));
+    });
+    queue.push(State {
+        pos: Pos { row: 0, col: 0 },
+        cost: 0,
+        dir: LEFT,
+    });
 
-    while let Some(Reverse(cur)) = queue.pop() {
-        let cost_pos = &cost_map[cur.pos.row][cur.pos.col];
-        if cost_pos.current(cur.dir) < cur.cost {
-            continue;
-        }
+    while let Some(cur) = queue.pop() {
         /*
         println!(
             "Now evaluating pos {:?}, dir: {}, cost is {}",
-            cur.pos,
-            cur.dir,
-            cur.cost,
+            cur.pos, cur.dir, cur.cost
         );
         */
-        cost_map[cur.pos.row][cur.pos.col].set(cur.dir, cur.cost);
         if cur.pos == end {
             //println!("END REACHED\n===============================\n");
             return cur.cost;
         }
-        if cur.cost % 25 == 0 {
+        /*
+        if cur.cost % 100 == 0 {
             println!("Cost {}", cur.cost);
         }
+        */
         for dir in 0..4 {
-            if dir == cur.dir || (dir + 2) % 4 == cur.dir {
+            // Do not continue in the same direction, we already advanced enough
+            if dir == cur.dir  ||
+            // Do not reverse
+                 (dir + 2) % 4 == cur.dir
+            {
                 continue;
             }
             let mut cost = cur.cost;
             for advance in 0..(move_range.start) {
-                if let Some(pos) = next_pos(&cur.pos, dir, map, advance + 1) {
+                // Skip minimum
+                if let Some(pos) = next_pos(&cur.pos, dir, map, advance as usize + 1) {
                     cost += map[pos.row][pos.col] as u32;
                 } else {
                     break;
                 }
             }
             for advance in move_range.clone() {
-                if let Some(pos) = next_pos(&cur.pos, dir, map, advance + 1) {
+                if let Some(pos) = next_pos(&cur.pos, dir, map, advance as usize + 1) {
                     cost += map[pos.row][pos.col] as u32;
                     /*
                     println!(
-                        "For pos {pos:?} in dir {dir} (step {advance}, adding cost {}, total is {cost}",
+                        "For pos {pos:?} in dir {dir} (step {advance}), adding cost {}, total is {cost}",
                         map[pos.row][pos.col]
                     );
                     */
-                    queue.push(Reverse(State {
-                        pos: pos.clone(),
-                        dir,
-                        cost,
-                    }));
+                    if let Some(next_cost) = cost_map.get(&(pos.clone(), dir, advance)) {
+                        if *next_cost < cost {
+                            break;
+                        }
+                    }
+                    cost_map.insert((pos.clone(), dir, advance), cost);
+                    queue.push(State { pos, dir, cost });
                 } else {
                     break;
                 }
             }
         }
     }
-    u32::MAX
+    unreachable!()
 }
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct Pos {
     row: usize,
     col: usize,
@@ -129,32 +134,15 @@ struct State {
 }
 impl Ord for State {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.cost.cmp(&other.cost)
+        other
+            .cost
+            .cmp(&self.cost)
+            .then_with(|| (other.pos.row + other.pos.col).cmp(&(self.pos.row + self.pos.col)))
     }
 }
 impl PartialOrd for State {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.cmp(other))
-    }
-}
-
-#[derive(Debug, Clone)]
-struct Cost {
-    c: [u32; 2],
-}
-impl Default for Cost {
-    fn default() -> Self {
-        Cost { c: [u32::MAX; 2] }
-    }
-}
-impl Cost {
-    fn current(&self, dir: u8) -> u32 {
-        assert!(dir < 4);
-        self.c[dir as usize % 2]
-    }
-    fn set(&mut self, dir: u8, val: u32) {
-        assert!(dir < 4);
-        self.c[dir as usize % 2] = val;
     }
 }
 
@@ -169,15 +157,14 @@ fn test() {
     let res = part1(&map);
     assert_eq!(res, 102);
     //part 2
-    let res = part2(&map);
-    assert_eq!(res, 94, "part 2 is wrong");
-
-    let map = parse(
+    let mapsmol = parse(
         "111111111111
 999999999991
 999999999991
 999999999991
 999999999991",
     );
-    assert_eq!(part2(&map), 71);
+    assert_eq!(part2(&mapsmol), 71);
+    let res = part2(&map);
+    assert_eq!(res, 94, "part 2 is wrong");
 }
