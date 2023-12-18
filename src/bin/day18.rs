@@ -7,17 +7,14 @@ fn main() {
     let res = part1(things.clone());
     println!("Part 1: {}", res);
     //part 2
-    /*
-    let res = part2(things);
+    let res = part2(parse2(input!()));
     println!("Part 2: {}", res);
-    */
 }
 type ParsedItem = Dig;
 #[derive(Debug)]
 struct Dig {
+    len: u64,
     dir: u8,
-    len: u8,
-    color: u32,
 }
 fn parse(input: &str) -> impl Iterator<Item = ParsedItem> + Clone + '_ {
     input.lines().map(|l| {
@@ -25,7 +22,6 @@ fn parse(input: &str) -> impl Iterator<Item = ParsedItem> + Clone + '_ {
         Dig {
             dir: parts.next().expect("dir").as_bytes()[0],
             len: parts.next().expect("len").parse().expect("not an int"),
-            color: 0,
         }
     })
 }
@@ -36,6 +32,7 @@ where
     let vertices: Vec<_> = things
         .scan((0_isize, 0_isize), |coord, op| {
             let mul = op.len as isize;
+            println!("{} {}", op.dir as char, op.len);
             let d = HashMap::from([
                 (b'U', [0, -1]),
                 (b'D', [0, 1]),
@@ -163,14 +160,46 @@ fn flood(map: &[Vec<bool>], seen: &mut [Vec<bool>], current: (isize, isize)) -> 
         + 1
 }
 
+fn parse2(input: &str) -> impl Iterator<Item = ParsedItem> + Clone + '_ {
+    input.lines().map(|l| {
+        let mut parts = l.split_ascii_whitespace();
+        let last = &parts.nth(2).expect("no last").to_string()[2..8];
+        let ins_char = &last.chars().nth(last.len() - 1).expect("no last char");
+        let len_str = &last[0..5];
+        println!("{len_str}");
+        Dig {
+            dir: match ins_char {
+                '0' => b'R',
+                '1' => b'D',
+                '2' => b'L',
+                '3' => b'U',
+                _ => unreachable!(),
+            },
+            len: u64::from_str_radix(len_str, 16).expect("not an int"),
+        }
+    })
+}
+
 fn part2<I>(things: I) -> usize
 where
     I: Iterator<Item = ParsedItem>,
 {
-    for _ in things {
-        todo!()
-    }
-    42
+    let vertices: Vec<_> = things
+        .scan((0_isize, 0_isize), |coord, op| {
+            let mul = op.len as isize;
+            println!("{} {}", op.dir as char, op.len);
+            let d = HashMap::from([
+                (b'U', [0, -1]),
+                (b'D', [0, 1]),
+                (b'L', [-1, 0]),
+                (b'R', [1, 0]),
+            ]);
+            let inc = d[&op.dir];
+            *coord = (coord.0 + inc[0] * mul, coord.1 + inc[1] * mul);
+            Some(*coord)
+        })
+        .collect();
+    shoelace_pick(&vertices)
 }
 
 #[test]
@@ -198,6 +227,6 @@ U 1 (#424242)",
     ));
     assert_eq!(small, 8);
     //part 2
-    //let res = part2(things);
-    //assert_eq!(res, 42);
+    let res = part2(parse2(sample!()));
+    assert_eq!(res, 952408144115);
 }
