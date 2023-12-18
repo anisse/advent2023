@@ -100,6 +100,7 @@ fn flood_fill(mut vertices: Vec<(isize, isize)>) -> usize {
 
     //let outside = flood(&map, &mut seen, (0, 0));
     let map_size = map[0].len() * map.len();
+    // Needs a bigger stack
     let child = thread::Builder::new()
         .stack_size(32 * 1024 * 1024)
         .spawn(move || flood(&map, &mut seen, (0, 0)))
@@ -189,6 +190,13 @@ L 1 (#424242)
 U 2 (#424242)",
     ));
     assert_eq!(small, 9 + 4);
+    let small = part1(parse(
+        "R 3 (#424242)
+D 1 (#424242)
+L 3 (#424242)
+U 1 (#424242)",
+    ));
+    assert_eq!(small, 8);
     //part 2
     //let res = part2(things);
     //assert_eq!(res, 42);
