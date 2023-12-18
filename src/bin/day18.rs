@@ -24,7 +24,7 @@ fn parse(input: &str) -> impl Iterator<Item = ParsedItem> + Clone + '_ {
         let mut parts = l.split_ascii_whitespace();
         Dig {
             dir: parts.next().expect("dir").as_bytes()[0],
-            len: parts.next().expect("len").as_bytes()[0] - b'0',
+            len: parts.next().expect("len").parse().expect("not an int"),
             color: 0,
         }
     })
