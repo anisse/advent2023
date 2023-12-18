@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, thread};
 
 use advent2023::*;
 fn main() {
@@ -7,8 +7,10 @@ fn main() {
     let res = part1(things.clone());
     println!("Part 1: {}", res);
     //part 2
+    /*
     let res = part2(things);
     println!("Part 2: {}", res);
+    */
 }
 type ParsedItem = Dig;
 #[derive(Debug)]
@@ -31,7 +33,7 @@ fn part1<I>(things: I) -> usize
 where
     I: Iterator<Item = ParsedItem>,
 {
-    let mut vertices: Vec<_> = things
+    let vertices: Vec<_> = things
         .scan((0_isize, 0_isize), |coord, op| {
             let mul = op.len as isize;
             let d = HashMap::from([
@@ -45,7 +47,13 @@ where
             Some(*coord)
         })
         .collect();
-    /*
+    let res1 = shoelace_pick(&vertices);
+    let res2 = flood_fill(vertices);
+    assert_eq!(res1, res2);
+    res1
+}
+
+fn flood_fill(mut vertices: Vec<(isize, isize)>) -> usize {
     let (mut xmin, mut ymin) = vertices[0];
     let (mut xmax, mut ymax) = vertices[0];
     for v in vertices.iter().skip(1) {
@@ -69,7 +77,7 @@ where
 
     let mut map = vec![vec![false; cols]; rows];
     vertices.push(vertices[0]);
-    dbg!(&vertices);
+    //dbg!(&vertices);
     for i in 0..(vertices.len() - 1) {
         let rmin = vertices[i].1.min(vertices[i + 1].1);
         let rmax = vertices[i].1.max(vertices[i + 1].1);
@@ -87,28 +95,21 @@ where
             .for_each(|c| if *c { print!("#") } else { print!(".") });
         println!();
     });
-    let edge: usize = map.iter().map(|l| l.iter().filter(|c| **c).count()).sum();
-    let inside: usize = map
-        .iter()
-        .enumerate()
-        .map(|(y, l)| {
-            l.iter()
-                .enumerate()
-                .filter(|(x, edge)| {
-                    let is_inside = !*edge
-                        && (*x..map[y].len()).map(|c| map[y][c]).filter(|c| *c).count() % 2 == 1;
-                    if *x < 50 && y < 30 {
-                        println!("Dot at ({x}, {y}) is inside? {is_inside}");
-                    }
-                    is_inside
-                })
-                .count()
-        })
-        .sum();
-    println!("Got {edge} edges and {inside} insides");
-    edge + inside
-    */
-    shoelace_pick(&vertices)
+    //let edge: usize = map.iter().map(|l| l.iter().filter(|c| **c).count()).sum();
+    let mut seen = vec![vec![false; map[0].len()]; map.len()];
+
+    //let outside = flood(&map, &mut seen, (0, 0));
+    let map_size = map[0].len() * map.len();
+    let child = thread::Builder::new()
+        .stack_size(32 * 1024 * 1024)
+        .spawn(move || flood(&map, &mut seen, (0, 0)))
+        .unwrap();
+
+    let outside = child.join().unwrap();
+
+    let inside = map_size - outside;
+    println!("Got {inside} insides");
+    inside
 }
 
 fn shoelace_pick(vertices: &[(isize, isize)]) -> usize {
@@ -123,7 +124,7 @@ fn shoelace_pick(vertices: &[(isize, isize)]) -> usize {
     sum1 += vertices[len - 1].0 * vertices[0].1;
     sum2 += vertices[0].0 * vertices[len - 1].1;
 
-    // Try to add edge ?
+    // add edge
     let mut edge_len = 0;
     for i in 0..(len - 1) {
         edge_len +=
@@ -136,6 +137,29 @@ fn shoelace_pick(vertices: &[(isize, isize)]) -> usize {
     let inside_dots = (area2 - edge_len) / 2 + 1;
     println!("Got inside: ({area2}/2) inside dots: {inside_dots}");
     inside_dots as usize + edge_len as usize
+}
+
+fn flood(map: &[Vec<bool>], seen: &mut [Vec<bool>], current: (isize, isize)) -> usize {
+    seen[current.1 as usize][current.0 as usize] = true;
+    //println!("flooding {current:?}");
+    [(0, -1), (0, 1), (-1, 0), (1, 0)]
+        .iter()
+        .map(|inc| {
+            let new_pos = (current.0 + inc.0, current.1 + inc.1);
+            let new_pos_u = (new_pos.0 as usize, new_pos.1 as usize);
+            if 0 <= new_pos.0
+                && new_pos_u.0 < map[0].len()
+                && 0 <= new_pos.1
+                && new_pos_u.1 < map.len()
+                && !seen[new_pos_u.1][new_pos_u.0]
+                && !map[new_pos_u.1][new_pos_u.0]
+            {
+                return flood(map, seen, new_pos);
+            }
+            0
+        })
+        .sum::<usize>()
+        + 1
 }
 
 fn part2<I>(things: I) -> usize
@@ -154,6 +178,17 @@ fn test() {
     //part 1
     let res = part1(things.clone());
     assert_eq!(res, 62);
+    let small = part1(parse(
+        "R 2 (#424242)
+D 2 (#424242)
+R 1 (#424242)
+D 1 (#424242)
+L 2 (#424242)
+U 1 (#424242)
+L 1 (#424242)
+U 2 (#424242)",
+    ));
+    assert_eq!(small, 9 + 4);
     //part 2
     //let res = part2(things);
     //assert_eq!(res, 42);
