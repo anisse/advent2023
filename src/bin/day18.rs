@@ -32,7 +32,7 @@ where
     let vertices: Vec<_> = things
         .scan((0_isize, 0_isize), |coord, op| {
             let mul = op.len as isize;
-            println!("{} {}", op.dir as char, op.len);
+            //println!("{} {}", op.dir as char, op.len);
             let d = HashMap::from([
                 (b'U', [0, -1]),
                 (b'D', [0, 1]),
@@ -87,11 +87,13 @@ fn flood_fill(mut vertices: Vec<(isize, isize)>) -> usize {
             }
         }
     }
+    /*
     map.iter().for_each(|l| {
         l.iter()
             .for_each(|c| if *c { print!("#") } else { print!(".") });
         println!();
     });
+    */
     //let edge: usize = map.iter().map(|l| l.iter().filter(|c| **c).count()).sum();
     let mut seen = vec![vec![false; map[0].len()]; map.len()];
 
@@ -106,7 +108,7 @@ fn flood_fill(mut vertices: Vec<(isize, isize)>) -> usize {
     let outside = child.join().unwrap();
 
     let inside = map_size - outside;
-    println!("Got {inside} insides");
+    //println!("Got {inside} insides");
     inside
 }
 
@@ -130,10 +132,10 @@ fn shoelace_pick(vertices: &[(isize, isize)]) -> usize {
     }
     edge_len +=
         (vertices[0].0 - vertices[len - 1].0).abs() + (vertices[0].1 - vertices[len - 1].1).abs();
-    println!("Edge is {edge_len}");
+    //println!("Edge is {edge_len}");
     let area2 = (sum1 - sum2).abs();
     let inside_dots = (area2 - edge_len) / 2 + 1;
-    println!("Got inside: ({area2}/2) inside dots: {inside_dots}");
+    //println!("Got inside: ({area2}/2) inside dots: {inside_dots}");
     inside_dots as usize + edge_len as usize
 }
 
@@ -166,7 +168,7 @@ fn parse2(input: &str) -> impl Iterator<Item = ParsedItem> + Clone + '_ {
         let last = &parts.nth(2).expect("no last").to_string()[2..8];
         let ins_char = &last.chars().nth(last.len() - 1).expect("no last char");
         let len_str = &last[0..5];
-        println!("{len_str}");
+        //println!("{len_str}");
         Dig {
             dir: match ins_char {
                 '0' => b'R',
@@ -187,7 +189,7 @@ where
     let vertices: Vec<_> = things
         .scan((0_isize, 0_isize), |coord, op| {
             let mul = op.len as isize;
-            println!("{} {}", op.dir as char, op.len);
+            //println!("{} {}", op.dir as char, op.len);
             let d = HashMap::from([
                 (b'U', [0, -1]),
                 (b'D', [0, 1]),
