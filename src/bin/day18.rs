@@ -45,6 +45,7 @@ where
             Some(*coord)
         })
         .collect();
+    /*
     let (mut xmin, mut ymin) = vertices[0];
     let (mut xmax, mut ymax) = vertices[0];
     for v in vertices.iter().skip(1) {
@@ -61,10 +62,10 @@ where
             ymax = v.1;
         }
     }
-    let rows = (ymax - ymin) as usize + 1;
-    let cols = (xmax - xmin) as usize + 1;
-    let xoffset = 0 - xmin;
-    let yoffset = 0 - ymin;
+    let rows = (ymax - ymin) as usize + 1 + 2;
+    let cols = (xmax - xmin) as usize + 1 + 2;
+    let xoffset = 0 - xmin + 1;
+    let yoffset = 0 - ymin + 1;
 
     let mut map = vec![vec![false; cols]; rows];
     vertices.push(vertices[0]);
@@ -94,17 +95,23 @@ where
             l.iter()
                 .enumerate()
                 .filter(|(x, edge)| {
-                    !*edge && (*x..map[y].len()).map(|c| map[y][c]).filter(|c| *c).count() % 2 == 1
+                    let is_inside = !*edge
+                        && (*x..map[y].len()).map(|c| map[y][c]).filter(|c| *c).count() % 2 == 1;
+                    if *x < 50 && y < 30 {
+                        println!("Dot at ({x}, {y}) is inside? {is_inside}");
+                    }
+                    is_inside
                 })
                 .count()
         })
         .sum();
     println!("Got {edge} edges and {inside} insides");
     edge + inside
-    //shoelace(&vertices)
+    */
+    shoelace_pick(&vertices)
 }
 
-fn shoelace(vertices: &[(isize, isize)]) -> usize {
+fn shoelace_pick(vertices: &[(isize, isize)]) -> usize {
     let len = vertices.len();
     let mut sum1: isize = 0;
     let mut sum2: isize = 0;
@@ -119,15 +126,16 @@ fn shoelace(vertices: &[(isize, isize)]) -> usize {
     // Try to add edge ?
     let mut edge_len = 0;
     for i in 0..(len - 1) {
-        edge_len += (vertices[i].0 - vertices[i + 1].0).abs()
-            + (vertices[i].1 - vertices[i + 1].1).abs()
-            - 1;
+        edge_len +=
+            (vertices[i].0 - vertices[i + 1].0).abs() + (vertices[i].1 - vertices[i + 1].1).abs();
     }
-    edge_len += (vertices[0].0 - vertices[len - 1].0).abs()
-        + (vertices[0].1 - vertices[len - 1].1).abs()
-        - 1;
-    println!("Got {sum1} - {sum2}, len: {edge_len}");
-    ((sum1 - sum2).abs() / 2) as usize + edge_len as usize
+    edge_len +=
+        (vertices[0].0 - vertices[len - 1].0).abs() + (vertices[0].1 - vertices[len - 1].1).abs();
+    println!("Edge is {edge_len}");
+    let area2 = (sum1 - sum2).abs();
+    let inside_dots = (area2 - edge_len) / 2 + 1;
+    println!("Got inside: ({area2}/2) inside dots: {inside_dots}");
+    inside_dots as usize + edge_len as usize
 }
 
 fn part2<I>(things: I) -> usize
