@@ -7,7 +7,7 @@ fn main() {
     let res = part1(&wf, parts.clone());
     println!("Part 1: {}", res);
     //part 2
-    let res = part2(&wf, parts);
+    let res = part2(&wf);
     println!("Part 2: {}", res);
 }
 type ParsedItem = Part;
@@ -35,11 +35,11 @@ fn parse(input: &str) -> (Workflows, impl Iterator<Item = ParsedItem> + Clone + 
             let mut parts = l.split(|c| c == '{' || c == '}');
             let name = parts.next().expect("a name");
             let rs = parts.next().expect("a part list");
-            println!("{name}, {rs}");
+            //println!("{name}, {rs}");
             let rules = rs
                 .split(',')
                 .map(|r| {
-                    println!("Parsing rule {r}");
+                    //println!("Parsing rule {r}");
                     let (exp, dest) = if r.contains(':') {
                         let (es, dest) = r.split_once(':').expect("rule in two part");
                         let esb = es.as_bytes();
@@ -120,10 +120,7 @@ struct Accepted {
     max: usize,
 }
 
-fn part2<I>(wf: &Workflows, parts: I) -> usize
-where
-    I: Iterator<Item = ParsedItem>,
-{
+fn part2(wf: &Workflows) -> usize {
     accept2(wf)
 }
 fn accept2(wf: &Workflows) -> usize {
@@ -133,9 +130,9 @@ fn accept2(wf: &Workflows) -> usize {
 
 fn accept2_tree(wf: &Workflows, name: &str, mut ranges: [Accepted; 4]) -> Option<usize> {
     let mut res = None;
-    println!("Evaluating rule {name}");
+    //println!("Evaluating rule {name}");
     for rule in &wf[name] {
-        println!("dest is {}", rule.dest);
+        //println!("dest is {}", rule.dest);
         let mut new = ranges;
         if let Some(exp) = &rule.exp {
             match exp.op {
@@ -164,7 +161,7 @@ fn eval_dest(res: &mut Option<usize>, wf: &Workflows, name: &str, ranges: &[Acce
                 Some(
                     ranges
                         .iter()
-                        .inspect(|r| println!("Accepted: {r:?}"))
+                        //.inspect(|r| println!("Accepted: {r:?}"))
                         .map(|r| if r.max < r.min { 0 } else { r.max - r.min })
                         //.map(|r| r.max - r.min)
                         .product::<usize>(),
@@ -198,6 +195,6 @@ fn test() {
     let res = part1(&wf, parts.clone());
     assert_eq!(res, 19114);
     //part 2
-    let res = part2(&wf, parts);
+    let res = part2(&wf);
     assert_eq!(res, 167409079868000);
 }
