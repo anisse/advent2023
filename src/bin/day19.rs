@@ -122,11 +122,11 @@ struct Accepted {
 
 fn part2(wf: &Workflows) -> usize {
     let res = [Accepted { min: 1, max: 4001 }; 4];
-    accept2_tree(wf, "in", res).expect("accepted")
+    accept2_tree(wf, "in", res)
 }
 
-fn accept2_tree(wf: &Workflows, name: &str, mut ranges: [Accepted; 4]) -> Option<usize> {
-    let mut res = None;
+fn accept2_tree(wf: &Workflows, name: &str, mut ranges: [Accepted; 4]) -> usize {
+    let mut res = 0;
     //println!("Evaluating rule {name}");
     for rule in &wf[name] {
         //println!("dest is {}", rule.dest);
@@ -143,46 +143,26 @@ fn accept2_tree(wf: &Workflows, name: &str, mut ranges: [Accepted; 4]) -> Option
                 }
                 _ => unreachable!(),
             }
-            eval_dest(&mut res, wf, rule.dest, &new);
+            res += eval_dest(wf, rule.dest, &new);
         } else {
-            eval_dest(&mut res, wf, rule.dest, &ranges);
+            res += eval_dest(wf, rule.dest, &ranges);
         }
     }
     res
 }
-fn eval_dest(res: &mut Option<usize>, wf: &Workflows, name: &str, ranges: &[Accepted; 4]) {
+fn eval_dest(wf: &Workflows, name: &str, ranges: &[Accepted; 4]) -> usize {
     match name {
         "A" => {
-            *res = add(
-                *res,
-                Some(
-                    ranges
-                        .iter()
-                        //.inspect(|r| println!("Accepted: {r:?}"))
-                        .map(|r| if r.max < r.min { 0 } else { r.max - r.min })
-                        //.map(|r| r.max - r.min)
-                        .product::<usize>(),
-                ),
-            )
+            ranges
+                .iter()
+                //.inspect(|r| println!("Accepted: {r:?}"))
+                .map(|r| if r.max < r.min { 0 } else { r.max - r.min })
+                //.map(|r| r.max - r.min)
+                .product::<usize>()
         }
-        "R" => {}
-        _ => {
-            *res = add(*res, accept2_tree(wf, name, *ranges));
-        }
+        "R" => 0,
+        _ => accept2_tree(wf, name, *ranges),
     }
-}
-
-fn add(a: Option<usize>, b: Option<usize>) -> Option<usize> {
-    if a.is_none() && b.is_none() {
-        return None;
-    }
-    if a.is_none() {
-        return b;
-    }
-    if b.is_none() {
-        return a;
-    }
-    Some(a.unwrap() + b.unwrap())
 }
 
 #[test]
