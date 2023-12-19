@@ -114,14 +114,81 @@ fn operand_to_idx(operand: u8) -> usize {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+struct Accepted {
+    min: usize,
+    max: usize,
+}
+
 fn part2<I>(wf: &Workflows, parts: I) -> usize
 where
     I: Iterator<Item = ParsedItem>,
 {
-    for _ in parts {
-        todo!()
+    accept2(wf)
+}
+fn accept2(wf: &Workflows) -> usize {
+    let res = [Accepted { min: 0, max: 4001 }; 4];
+    accept2_tree(wf, "in", res).expect("accepted")
+}
+
+fn accept2_tree(wf: &Workflows, name: &str, mut ranges: [Accepted; 4]) -> Option<usize> {
+    let mut res = None;
+    println!("Evaluating rule {name}");
+    for rule in &wf[name] {
+        println!("dest is {}", rule.dest);
+        let mut new = ranges;
+        if let Some(exp) = &rule.exp {
+            match exp.op {
+                b'<' => {
+                    new[operand_to_idx(exp.operand)].max = exp.val;
+                    ranges[operand_to_idx(exp.operand)].min = exp.val;
+                }
+                b'>' => {
+                    new[operand_to_idx(exp.operand)].min = exp.val + 1;
+                    ranges[operand_to_idx(exp.operand)].max = exp.val + 1;
+                }
+                _ => unreachable!(),
+            }
+            eval_dest(&mut res, wf, rule.dest, &new);
+        } else {
+            eval_dest(&mut res, wf, rule.dest, &ranges);
+        }
     }
-    42
+    res
+}
+fn eval_dest(res: &mut Option<usize>, wf: &Workflows, name: &str, ranges: &[Accepted; 4]) {
+    match name {
+        "A" => {
+            *res = add(
+                *res,
+                Some(
+                    ranges
+                        .iter()
+                        .inspect(|r| println!("Accepted: {r:?}"))
+                        .map(|r| if r.max < r.min { 0 } else { r.max - r.min })
+                        //.map(|r| r.max - r.min)
+                        .product::<usize>(),
+                ),
+            )
+        }
+        "R" => {}
+        _ => {
+            *res = add(*res, accept2_tree(wf, name, *ranges));
+        }
+    }
+}
+
+fn add(a: Option<usize>, b: Option<usize>) -> Option<usize> {
+    if a.is_none() && b.is_none() {
+        return None;
+    }
+    if a.is_none() {
+        return b;
+    }
+    if b.is_none() {
+        return a;
+    }
+    Some(a.unwrap() + b.unwrap())
 }
 
 #[test]
@@ -132,5 +199,5 @@ fn test() {
     assert_eq!(res, 19114);
     //part 2
     let res = part2(&wf, parts);
-    assert_eq!(res, 42);
+    assert_eq!(res, 167409079868000);
 }
