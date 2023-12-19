@@ -127,7 +127,7 @@ where
     accept2(wf)
 }
 fn accept2(wf: &Workflows) -> usize {
-    let res = [Accepted { min: 0, max: 4001 }; 4];
+    let res = [Accepted { min: 1, max: 4001 }; 4];
     accept2_tree(wf, "in", res).expect("accepted")
 }
 
