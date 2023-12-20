@@ -88,8 +88,15 @@ where
 fn test() {
     let things = parse(sample!());
     //part 1
-    let res = part1(things.clone());
-    assert_eq!(res, 42);
+    let res = part1(&things);
+    assert_eq!(res, 32000000);
+    let sample2 = "broadcaster -> a
+%a -> inv, con
+&inv -> b
+%b -> con
+&con -> output";
+    assert_eq!(part1(&parse(sample2)), 11687500);
+
     //part 2
     //let res = part2(things);
     //assert_eq!(res, 42);
