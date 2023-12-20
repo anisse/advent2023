@@ -81,7 +81,7 @@ fn part1(modules: &ModuleMap) -> usize {
             &mut HashMap::new(),
         );
         high += h;
-        low += l; // account for button
+        low += l;
     }
     high * low
 }
