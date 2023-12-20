@@ -95,9 +95,6 @@ fn part1(modules: &ModuleMap) -> usize {
             &mut states,
             &mut HashMap::new(),
         );
-        if _i < 3 {
-            println!("Got {h} highs and {l} low\n");
-        }
         high += h;
         low += l; // account for button
     }
@@ -212,7 +209,7 @@ fn part2(modules: &ModuleMap) -> usize {
             .iter()
             .filter(|(_, v)| **v)
             .for_each(|(name, _)| {
-                println!("{name} was up at cycle {presses}");
+                //println!("{name} was up at cycle {presses}");
                 lb_input_first_up_cycle
                     .entry(name.to_string())
                     .or_insert(presses);
