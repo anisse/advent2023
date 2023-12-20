@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 use advent2023::*;
 fn main() {
@@ -25,16 +25,15 @@ enum ModuleType {
 }
 
 #[derive(Debug)]
-enum State<'a> {
+enum State {
+    Start,
     FlipFlop(bool),
-    Conjunction(HashMap<&'a str, bool>),
+    Conjunction(HashMap<String, bool>),
 }
 use ModuleType::*;
 
 type ModuleMap<'a> = HashMap<&'a str, Module<'a>>;
-type StateMap<'a> = HashMap<&'a str, State<'a>>;
-
-type ParsedItem<'a> = Module<'a>;
+type StateMap<'a> = HashMap<&'a str, State>;
 
 fn parse(input: &str) -> ModuleMap {
     let mut map: ModuleMap = input
@@ -47,7 +46,10 @@ fn parse(input: &str) -> ModuleMap {
                 _ => unreachable!(),
             };
             let split = l.split_once(" -> ").expect("a ->");
-            let name = &split.0[1..];
+            let name = split
+                .0
+                .strip_prefix(|c| c == '%' || c == '&')
+                .unwrap_or(split.0);
             let outputs = split.1.split(", ").collect();
             (name, Module { outputs, t })
         })
@@ -65,11 +67,100 @@ fn parse(input: &str) -> ModuleMap {
     });
     map
 }
-fn part1(things: &ModuleMap) -> usize {
-    for t in things.iter() {
-        dbg!(&t);
+fn part1(modules: &ModuleMap) -> usize {
+    let mut states = StateMap::new();
+    modules.iter().for_each(|(name, module)| match &module.t {
+        Start => {
+            states.insert(name, State::Start);
+        }
+        FlipFlop => {
+            states.insert(name, State::FlipFlop(false));
+        }
+        Conjunction { inputs } => {
+            let mut h = HashMap::new();
+            inputs.iter().for_each(|i| {
+                h.insert(i.to_string(), false);
+            });
+            states.insert(name, State::Conjunction(h));
+        }
+    });
+
+    let (mut high, mut low) = (0, 0);
+    for _i in 0..1000 {
+        let (h, l) = update_state("button", "broadcaster", false, modules, &mut states);
+        if _i < 3 {
+            println!("Got {h} highs and {l} low\n");
+        }
+        high += h;
+        low += l; // account for button
     }
-    0
+    high * low
+}
+
+fn update_state(
+    source: &str,
+    name: &str,
+    high: bool,
+    modules: &ModuleMap,
+    states: &mut StateMap,
+) -> (usize, usize) {
+    let mut update_state_list: VecDeque<(String, String, bool)> = VecDeque::new();
+    update_state_list.push_back((source.to_string(), name.to_string(), high));
+    let (mut high_count, mut low_count) = (0, 0);
+    while let Some((source, name, high)) = update_state_list.pop_front() {
+        println!("{source} -{}-> {name}", if high { "high" } else { "low" });
+        if high {
+            high_count += 1;
+        } else {
+            low_count += 1;
+        }
+        if states.get(&name as &str).is_none() {
+            println!("Reached output {name}");
+            continue;
+        }
+        match states.get_mut(&name as &str).unwrap() {
+            State::Start => {
+                modules[&name as &str].outputs.iter().for_each(|o| {
+                    update_state_list.push_back((name.clone(), o.to_string(), false))
+                });
+            }
+            State::FlipFlop(ref mut up) => {
+                if high {
+                    continue;
+                }
+                *up = !*up;
+                modules[&name as &str]
+                    .outputs
+                    .iter()
+                    .for_each(|o| update_state_list.push_back((name.clone(), o.to_string(), *up)));
+            }
+            State::Conjunction(inputs) => {
+                inputs.insert(source.to_string(), high);
+                let send = !inputs.values().all(|i| *i);
+                modules[&name as &str]
+                    .outputs
+                    .iter()
+                    .for_each(|o| update_state_list.push_back((name.clone(), o.to_string(), send)));
+            }
+        }
+    }
+    (high_count, low_count)
+    /*
+    update_state_list.iter().for_each(|(new, send)| {
+        println!("{name} -{}-> {new}", if *send { "high" } else { "low" });
+    });
+    update_state_list.iter().for_each(|(new, send)| {
+        if *send {
+            high += 1;
+        } else {
+            low += 1;
+        }
+        let (h, l) = update_state(new, name, *send, modules, states);
+        high += h;
+        low += l;
+    });
+    (high, low)
+    */
 }
 
 /*
