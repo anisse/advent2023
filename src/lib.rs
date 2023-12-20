@@ -64,3 +64,18 @@ fn ints_test() {
         vec![1, 42, -3874, 384, 81, -1],
     );
 }
+
+pub fn lcm(a: usize, b: usize) -> usize {
+    a * b / gcd(a, b)
+}
+
+fn gcd(mut a: usize, mut b: usize) -> usize {
+    while a != b {
+        if a > b {
+            a -= b;
+        } else {
+            b -= a;
+        }
+    }
+    a
+}
