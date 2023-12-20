@@ -68,22 +68,7 @@ fn parse(input: &str) -> ModuleMap {
     map
 }
 fn part1(modules: &ModuleMap) -> usize {
-    let mut states = StateMap::new();
-    modules.iter().for_each(|(name, module)| match &module.t {
-        Start => {
-            states.insert(name, State::Start);
-        }
-        FlipFlop => {
-            states.insert(name, State::FlipFlop(false));
-        }
-        Conjunction { inputs } => {
-            let mut h = HashMap::new();
-            inputs.iter().for_each(|i| {
-                h.insert(i.to_string(), false);
-            });
-            states.insert(name, State::Conjunction(h));
-        }
-    });
+    let mut states = state_init(modules);
 
     let (mut high, mut low) = (0, 0);
     for _i in 0..1000 {
@@ -99,6 +84,23 @@ fn part1(modules: &ModuleMap) -> usize {
         low += l; // account for button
     }
     high * low
+}
+
+fn state_init<'a>(modules: &ModuleMap<'a>) -> StateMap<'a> {
+    modules
+        .iter()
+        .map(|(name, module)| match &module.t {
+            Start => (*name, State::Start),
+            FlipFlop => (*name, State::FlipFlop(false)),
+            Conjunction { inputs } => {
+                let mut h = HashMap::new();
+                inputs.iter().for_each(|i| {
+                    h.insert(i.to_string(), false);
+                });
+                (*name, State::Conjunction(h))
+            }
+        })
+        .collect()
 }
 
 fn update_state(
@@ -158,22 +160,7 @@ fn update_state(
 }
 
 fn part2(modules: &ModuleMap) -> usize {
-    let mut states = StateMap::new();
-    modules.iter().for_each(|(name, module)| match &module.t {
-        Start => {
-            states.insert(name, State::Start);
-        }
-        FlipFlop => {
-            states.insert(name, State::FlipFlop(false));
-        }
-        Conjunction { inputs } => {
-            let mut h = HashMap::new();
-            inputs.iter().for_each(|i| {
-                h.insert(i.to_string(), false);
-            });
-            states.insert(name, State::Conjunction(h));
-        }
-    });
+    let mut states = state_init(modules);
     let mut rx_input = String::new();
     modules.iter().for_each(|(name, module)| {
         for o in &module.outputs {
