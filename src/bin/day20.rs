@@ -7,8 +7,8 @@ fn main() {
     let res = part1(&things);
     println!("Part 1: {}", res);
     //part 2
-    //let res = part2(things);
-    //println!("Part 2: {}", res);
+    let res = part2(&things);
+    println!("Part 2: {}", res);
 }
 
 #[derive(Debug)]
@@ -108,7 +108,7 @@ fn update_state(
     update_state_list.push_back((source.to_string(), name.to_string(), high));
     let (mut high_count, mut low_count) = (0, 0);
     while let Some((source, name, high)) = update_state_list.pop_front() {
-        println!("{source} -{}-> {name}", if high { "high" } else { "low" });
+        //println!("{source} -{}-> {name}", if high { "high" } else { "low" });
         if high {
             high_count += 1;
         } else {
@@ -145,36 +145,48 @@ fn update_state(
         }
     }
     (high_count, low_count)
-    /*
-    update_state_list.iter().for_each(|(new, send)| {
-        println!("{name} -{}-> {new}", if *send { "high" } else { "low" });
-    });
-    update_state_list.iter().for_each(|(new, send)| {
-        if *send {
-            high += 1;
-        } else {
-            low += 1;
+}
+
+fn part2(modules: &ModuleMap) -> usize {
+    let mut states = StateMap::new();
+    modules.iter().for_each(|(name, module)| match &module.t {
+        Start => {
+            states.insert(name, State::Start);
         }
-        let (h, l) = update_state(new, name, *send, modules, states);
-        high += h;
-        low += l;
+        FlipFlop => {
+            states.insert(name, State::FlipFlop(false));
+        }
+        Conjunction { inputs } => {
+            let mut h = HashMap::new();
+            inputs.iter().for_each(|i| {
+                h.insert(i.to_string(), false);
+            });
+            states.insert(name, State::Conjunction(h));
+        }
     });
-    (high, low)
-    */
-}
+    modules.values().for_each(|module| {
+        for o in &module.outputs {
+            if states.get(o).is_none() {
+                states.insert(o, State::FlipFlop(false));
+            }
+        }
+    });
 
-/*
-fn part2<I>(things: I) -> usize
-where
-    I: Iterator<Item = ParsedItem>,
-{
-    for _ in things {
-        todo!()
+    let mut presses = 0;
+    loop {
+        update_state("button", "broadcaster", false, modules, &mut states);
+        presses += 1;
+        if let State::FlipFlop(s) = states["rx"] {
+            if s {
+                break;
+            }
+        } else {
+            unreachable!();
+        }
     }
-    42
+    presses
 }
 
-*/
 #[test]
 fn test() {
     let things = parse(sample!());
