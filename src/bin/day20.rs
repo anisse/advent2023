@@ -224,8 +224,4 @@ fn test() {
 %b -> con
 &con -> output";
     assert_eq!(part1(&parse(sample2)), 11687500);
-
-    //part 2
-    //let res = part2(things);
-    //assert_eq!(res, 42);
 }
