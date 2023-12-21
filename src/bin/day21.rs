@@ -117,44 +117,6 @@ fn _print_map_max(map: MapRef, seen: SeenMapRef, max: usize, even: bool) {
     });
 }
 
-fn explore(map: MapRef, seen: SeenMapRefMut, pos: (usize, usize), remaining_steps: usize) {
-    if remaining_steps % 2 == 0 {
-        seen[pos.1][pos.0].even = Some(remaining_steps);
-    } else {
-        seen[pos.1][pos.0].odd = Some(remaining_steps);
-    }
-    //println!("Now at pos {pos:?}, remaining: {remaining_steps}");
-    if remaining_steps == 0 {
-        return;
-    }
-    let ipos = (pos.0 as isize, pos.1 as isize);
-    for d in [(0, 1), (0, -1), (1, 0), (-1, 0)].into_iter() {
-        let inext = (ipos.0 + d.0, ipos.1 + d.1);
-        let next = (inext.0 as usize, inext.1 as usize);
-        if inext.0 < 0 || next.0 >= map[0].len() || inext.1 < 0 || next.1 >= map.len() {
-            continue;
-        }
-        if map[next.1][next.0] == b'#' {
-            continue;
-        }
-        let is_even = (remaining_steps - 1) % 2 == 0;
-        let s = &seen[next.1][next.0];
-        let go = if is_even {
-            match s.even {
-                Some(ev) => ev < remaining_steps - 1,
-                None => true,
-            }
-        } else {
-            match s.odd {
-                Some(od) => od < remaining_steps - 1,
-                None => true,
-            }
-        };
-        if go {
-            explore(map, seen, next, remaining_steps - 1);
-        }
-    }
-}
 fn even_odd_rhombus_squares(a: usize) -> (usize, usize) {
     println!("a={a} a/2 = {}", a / 2);
     let even = 1 + (1..=a / 2).map(|n| 4 * (2 * n)).sum::<usize>();
