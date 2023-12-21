@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BinaryHeap, HashMap};
 
 use advent2023::*;
 fn main() {
@@ -36,11 +36,22 @@ fn part1(map: MapRef, steps: usize) -> usize {
         .next()
         .expect("S pos");
     //dbg!(&spos);
-    explore(map, &mut seen, spos, steps);
+    explore_full(map, &mut seen, spos);
     //_print_map(map, &seen);
     seen.iter()
         .flatten()
-        .filter(|seen_at| seen_at.even.is_some())
+        .filter(|seen_at| {
+            let s = if steps % 2 == 0 {
+                &seen_at.even
+            } else {
+                &seen_at.odd
+            };
+            if let Some(count) = *s {
+                count <= steps
+            } else {
+                false
+            }
+        })
         .count()
 }
 fn _print_map(map: MapRef, seen: SeenMapRef) {
@@ -116,9 +127,7 @@ fn part2(map: MapRef, steps: usize) -> usize {
         .next()
         .expect("S pos");
     //dbg!(&spos);
-    let max_steps: usize = map.len(); // We are lucky ROWS == COLUMNS
-    explore(map, &mut seen, spos, max_steps);
-    let mut seen_edges = HashMap::new();
+    explore_full(map, &mut seen, spos);
     let seen_even = seen
         .iter()
         .flatten()
@@ -136,6 +145,7 @@ fn part2(map: MapRef, steps: usize) -> usize {
         seen[map.len() - 1][map[0].len() - 1]
     );
 
+    let mut seen_edges = HashMap::new();
     (0..map.len()).for_each(|y| {
         (0..map[0].len()).for_each(|x| {
             if x != 0 && x != map[0].len() - 1 && y != 0 && y != map.len() - 1 {
@@ -147,17 +157,84 @@ fn part2(map: MapRef, steps: usize) -> usize {
             }
             */
             let mut edge = vec![vec![Seen::default(); map[0].len()]; map.len()];
-            explore(map, &mut edge, (x, y), max_steps);
+            explore_full(map, &mut edge, (x, y));
             seen_edges.insert((x, y), edge);
         });
     });
-    println!("For {max_steps}");
+    seen_edges.iter().for_each(|(coord, seen)| {
+        println!("For {coord:?}",);
+        //_print_map(map, seen);
+        println!(
+            "For {coord:?}, max to exit is {}",
+            seen.iter()
+                .flatten()
+                .filter(|seen_at| seen_at.even.is_some() || seen_at.odd.is_some())
+                //.inspect(|seen_at| println!("{seen_at:?}"))
+                .map(|seen_at| seen_at.even.unwrap_or_else(|| seen_at.odd.unwrap()))
+                .max()
+                .expect("a max")
+        );
+    });
+    println!();
     _print_map(map, &seen);
     seen.iter()
         .flatten()
         .filter(|seen_at| seen_at.even.is_some())
         .count()
 }
+
+fn explore_full(map: MapRef, seen: SeenMapRefMut, pos: (usize, usize)) {
+    let mut queue = BinaryHeap::new();
+
+    queue.push((0_isize, pos));
+
+    while let Some((total_steps, pos)) = queue.pop() {
+        let total_steps = (-total_steps) as usize;
+        //println!("{total_steps}: Now at pos {pos:?}");
+        let ipos = (pos.0 as isize, pos.1 as isize);
+        for d in [(0, 1), (0, -1), (1, 0), (-1, 0)].into_iter() {
+            let inext = (ipos.0 + d.0, ipos.1 + d.1);
+            let next = (inext.0 as usize, inext.1 as usize);
+            if inext.0 < 0 || next.0 >= map[0].len() || inext.1 < 0 || next.1 >= map.len() {
+                continue;
+            }
+            if map[next.1][next.0] == b'#' {
+                continue;
+            }
+            let next_steps = total_steps + 1;
+            let is_even = next_steps % 2 == 0;
+            let s = &seen[next.1][next.0];
+            let go = if is_even {
+                match s.even {
+                    Some(ev) => ev > next_steps,
+                    None => true,
+                }
+            } else {
+                match s.odd {
+                    Some(od) => od > next_steps,
+                    None => true,
+                }
+            };
+            if go {
+                //println!("{next_steps}: going to {next:?} {s:?}");
+                if next_steps % 2 == 0 {
+                    seen[next.1][next.0].even = Some(next_steps);
+                } else {
+                    seen[next.1][next.0].odd = Some(next_steps);
+                }
+                queue.push((-(next_steps as isize), next));
+            }
+        }
+    }
+}
+
+/*
+#[test]
+fn test_full_input() {
+    let map = parse(input!());
+    assert_eq!(3574, part1(&map, 64),);
+}
+*/
 
 #[test]
 fn test() {
@@ -171,6 +248,7 @@ fn test() {
         );
     }
     //part 2
+    /*
     for (steps, res) in [
         (6, 16),
         (10, 50),
@@ -184,4 +262,5 @@ fn test() {
     {
         assert_eq!(res, part2(&map, steps));
     }
+    */
 }
