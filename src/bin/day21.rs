@@ -77,7 +77,7 @@ fn _print_map(map: MapRef, seen: SeenMapRef) {
         println!();
     });
 }
-fn _print_map_max(map: MapRef, seen: SeenMapRef, max: usize) {
+fn _print_map_max(map: MapRef, seen: SeenMapRef, max: usize, even: bool) {
     (0..map.len()).for_each(|y| {
         (0..map[y].len()).for_each(|x| {
             print!(
@@ -88,11 +88,23 @@ fn _print_map_max(map: MapRef, seen: SeenMapRef, max: usize) {
                     (
                         b'.',
                         Seen {
+                            even: _,
+                            odd: Some(od),
+                        },
+                    ) =>
+                        if *od <= max && !even {
+                            "O"
+                        } else {
+                            "."
+                        },
+                    (
+                        b'.',
+                        Seen {
                             even: Some(ev),
                             odd: _,
                         },
                     ) =>
-                        if *ev <= max {
+                        if *ev <= max && even {
                             "O"
                         } else {
                             "."
@@ -207,9 +219,9 @@ fn part2(map: MapRef, steps: usize) -> usize {
             explore_full(map, &mut edge, (x, y));
             println!("for {x}, {y}");
             if [(0, 0), (0, end), (end, 0), (end, end)].contains(&(x, y)) {
-                _print_map_max(map, &edge, end);
+                _print_map_max(map, &edge, end, false);
             } else {
-                _print_map_max(map, &edge, start_dist);
+                _print_map_max(map, &edge, start_dist, true);
             }
             seen_edges.insert((x, y), edge);
         });
