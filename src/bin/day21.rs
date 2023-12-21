@@ -36,7 +36,7 @@ fn part1(map: MapRef, steps: usize) -> usize {
         .expect("S pos");
     //dbg!(&spos);
     explore_full(map, &mut seen, spos);
-    //_print_map(map, &seen);
+    _print_map_max(map, &seen, steps, steps % 2 == 0);
     seen.iter()
         .flatten()
         .filter(|seen_at| {
@@ -83,9 +83,8 @@ fn _print_map_max(map: MapRef, seen: SeenMapRef, max: usize, even: bool) {
                 "{}",
                 match (map[y][x], &seen[y][x]) {
                     (b'#', _) => "#",
-                    (b'S', _) => "S",
                     (
-                        b'.',
+                        _,
                         Seen {
                             even: _,
                             odd: Some(od),
@@ -97,7 +96,7 @@ fn _print_map_max(map: MapRef, seen: SeenMapRef, max: usize, even: bool) {
                             "."
                         },
                     (
-                        b'.',
+                        _,
                         Seen {
                             even: Some(ev),
                             odd: _,
@@ -108,6 +107,7 @@ fn _print_map_max(map: MapRef, seen: SeenMapRef, max: usize, even: bool) {
                         } else {
                             "."
                         },
+                    (b'S', _) => "S",
                     (b'.', _) => ".",
                     _ => unreachable!(),
                 }
@@ -350,4 +350,42 @@ fn test() {
         assert_eq!(res, part2(&map, steps));
     }
     */
+    //part 2 custom test case
+    let map_small = parse(
+        ".....
+...#.
+..S..
+.#...
+.....
+",
+    );
+    let map_big = parse(
+        ".........................
+...#....#....#....#....#.
+.........................
+.#....#....#....#....#...
+.........................
+.........................
+...#....#....#....#....#.
+.........................
+.#....#....#....#....#...
+.........................
+.........................
+...#....#....#....#....#.
+............S............
+.#....#....#....#....#...
+.........................
+.........................
+...#....#....#....#....#.
+.........................
+.#....#....#....#....#...
+.........................
+.........................
+...#....#....#....#....#.
+.........................
+.#....#....#....#....#...
+.........................",
+    );
+
+    assert_eq!(part1(&map_big, 12), part2(&map_small, 12));
 }
