@@ -235,9 +235,9 @@ fn part2(map: MapRef, steps: usize) -> usize {
             print!("for {x}, {y}; ");
             if [(0, 0), (0, end), (end, 0), (end, end)].contains(&(x, y)) {
                 println!("edge 1 (parity {}):", full_maps_1dir % 2);
-                _print_map_max(map, &edge, start_dist, full_maps_1dir % 2 == 0);
+                _print_map_max(map, &edge, start_dist, start_dist % 2 == 1);
                 println!("         edge 2:");
-                _print_map_max(map, &edge, end + start_dist, full_maps_1dir % 2 == 1);
+                _print_map_max(map, &edge, end + start_dist, start_dist % 2 == 0);
             } else {
                 println!("corner:");
                 _print_map_max(map, &edge, end, true);
@@ -253,17 +253,17 @@ fn part2(map: MapRef, steps: usize) -> usize {
         + area_for(&seen_edges[&(start_dist, end)], end, true)
         + area_for(&seen_edges[&(0, start_dist)], end, true);
     let mega_rhombus_edges_area = /* edges
-       */ area_for(&seen_edges[&(0, 0)], start_dist, full_maps_1dir % 2 == 0) * (full_maps_1dir + 1)
-        + area_for(&seen_edges[&(0, 0)], end + start_dist, full_maps_1dir % 2 == 1) * full_maps_1dir
+       */ area_for(&seen_edges[&(0, 0)], start_dist, start_dist % 2 == 1) * (full_maps_1dir + 1)
+        + area_for(&seen_edges[&(0, 0)], end + start_dist, start_dist % 2 == 0) * full_maps_1dir
 
-        + area_for(&seen_edges[&(0, end)], start_dist, full_maps_1dir % 2 == 0) * (full_maps_1dir + 1)
-        + area_for(&seen_edges[&(0, end)], end + start_dist, full_maps_1dir % 2 == 1) * full_maps_1dir
+        + area_for(&seen_edges[&(0, end)], start_dist, start_dist % 2 == 1) * (full_maps_1dir + 1)
+        + area_for(&seen_edges[&(0, end)], end + start_dist, start_dist % 2 == 0) * full_maps_1dir
 
-        + area_for(&seen_edges[&(end, 0)], start_dist, full_maps_1dir % 2 == 0) * (full_maps_1dir + 1)
-        + area_for(&seen_edges[&(end, 0)], end + start_dist, full_maps_1dir % 2 == 1) * full_maps_1dir
+        + area_for(&seen_edges[&(end, 0)], start_dist, start_dist % 2 == 1) * (full_maps_1dir + 1)
+        + area_for(&seen_edges[&(end, 0)], end + start_dist, start_dist % 2 == 0) * full_maps_1dir
 
-        + area_for(&seen_edges[&(end, end)], start_dist, full_maps_1dir % 2 == 0) * (full_maps_1dir + 1)
-        + area_for(&seen_edges[&(end, end)], end + start_dist, full_maps_1dir % 2 == 1) * full_maps_1dir;
+        + area_for(&seen_edges[&(end, end)], start_dist, start_dist % 2 == 1) * (full_maps_1dir + 1)
+        + area_for(&seen_edges[&(end, end)], end + start_dist, start_dist % 2 == 0) * full_maps_1dir;
     mega_rhombus_fullmaps_area + mega_rhombus_corners_area + mega_rhombus_edges_area
 }
 
@@ -403,7 +403,7 @@ fn test() {
 
 #[test]
 fn test_big() {
-    let map_small = parse(
+    for inp in [
         ".......
 ....#..
 ....##.
@@ -411,14 +411,23 @@ fn test_big() {
 ..#....
 .....#.
 .......",
-    );
-    for repeat in 1..15 {
-        let steps = (map_small.len() - 1) / 2 + map_small.len() * repeat;
-        println!("Custom map with {repeat} repeats");
-        assert_eq!(
-            part1(&build_map_big(&map_small, repeat), steps),
-            part2(&map_small, steps)
-        );
+        ".....
+...#.
+..S..
+.#...
+.....",
+    ]
+    .into_iter()
+    {
+        let map_small = parse(inp);
+        for repeat in 1..21 {
+            let steps = (map_small.len() - 1) / 2 + map_small.len() * repeat;
+            println!("Custom map with {repeat} repeats");
+            assert_eq!(
+                part1(&build_map_big(&map_small, repeat), steps),
+                part2(&map_small, steps)
+            );
+        }
     }
 }
 #[cfg(test)]
