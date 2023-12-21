@@ -235,7 +235,7 @@ fn part2(map: MapRef, steps: usize) -> usize {
             print!("for {x}, {y}; ");
             if [(0, 0), (0, end), (end, 0), (end, end)].contains(&(x, y)) {
                 println!("edge 1:");
-                _print_map_max(map, &edge, start_dist, false);
+                _print_map_max(map, &edge, start_dist - 1, false);
                 println!("         edge 2:");
                 _print_map_max(map, &edge, end + start_dist, true);
             } else {
@@ -253,16 +253,16 @@ fn part2(map: MapRef, steps: usize) -> usize {
         + area_for(&seen_edges[&(start_dist, end)], end, true)
         + area_for(&seen_edges[&(0, start_dist)], end, true);
     let mega_rhombus_edges_area = /* edges
-       */ area_for(&seen_edges[&(0, 0)], start_dist, false) * (full_maps_1dir + 1)
+       */ area_for(&seen_edges[&(0, 0)], start_dist-1, false) * (full_maps_1dir + 1)
         + area_for(&seen_edges[&(0, 0)], end + start_dist, true) * full_maps_1dir
 
-        + area_for(&seen_edges[&(0, end)], start_dist, false) * (full_maps_1dir + 1)
+        + area_for(&seen_edges[&(0, end)], start_dist-1, false) * (full_maps_1dir + 1)
         + area_for(&seen_edges[&(0, end)], end + start_dist, true) * full_maps_1dir
 
-        + area_for(&seen_edges[&(end, 0)], start_dist, false) * (full_maps_1dir + 1)
+        + area_for(&seen_edges[&(end, 0)], start_dist-1, false) * (full_maps_1dir + 1)
         + area_for(&seen_edges[&(end, 0)], end + start_dist, true) * full_maps_1dir
 
-        + area_for(&seen_edges[&(end, end)], start_dist, false) * (full_maps_1dir + 1)
+        + area_for(&seen_edges[&(end, end)], start_dist-1, false) * (full_maps_1dir + 1)
         + area_for(&seen_edges[&(end, end)], end + start_dist, true) * full_maps_1dir;
     mega_rhombus_fullmaps_area + mega_rhombus_corners_area + mega_rhombus_edges_area
 }
