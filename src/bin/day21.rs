@@ -176,6 +176,8 @@ fn part2(map: MapRef, steps: usize) -> usize {
         .flatten()
         .filter(|seen_at| seen_at.odd.is_some())
         .count();
+    assert_eq!(seen_odd, area_for(&seen, end, false));
+    assert_eq!(seen_even, area_for(&seen, end, true));
     println!("In map: {seen_odd} odd and {seen_even} even");
     println!("To reach (0, 0): {:?}", seen[0][0]);
     println!(
