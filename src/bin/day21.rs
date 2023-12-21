@@ -28,7 +28,6 @@ fn parse(input: &str) -> Map {
 }
 fn part1(map: MapRef, steps: usize) -> usize {
     let mut seen = vec![vec![Seen::default(); map[0].len()]; map.len()];
-    //let mut reachable = vec![vec![false; map[0].len()]; map.len()];
     let spos = map
         .iter()
         .enumerate()
@@ -156,6 +155,23 @@ fn explore(map: MapRef, seen: SeenMapRefMut, pos: (usize, usize), remaining_step
         }
     }
 }
+fn even_odd_rhombus_squares(a: usize) -> (usize, usize) {
+    println!("a={a} a/2 = {}", a / 2);
+    let even = 1 + (1..=a / 2).map(|n| 4 * (2 * n)).sum::<usize>();
+    let odd: usize = (0..(a + 1) / 2).map(|n| 4 * (1 + 2 * n)).sum();
+    (even, odd)
+}
+
+#[test]
+fn even_odd_test() {
+    for (v, res) in [(1, (1, 4)), (2, (1 + 8, 4)), (3, (1 + 8, 4 + 12))].into_iter() {
+        assert_eq!(
+            even_odd_rhombus_squares(v),
+            res,
+            "wrong result for {v}, expected {res:?}"
+        );
+    }
+}
 
 fn part2(map: MapRef, steps: usize) -> usize {
     assert_eq!(map.len(), map[0].len());
@@ -165,9 +181,10 @@ fn part2(map: MapRef, steps: usize) -> usize {
     let full_maps_1dir = (steps - start_dist) / map.len() - 1; //remove corner
     let full_maps_1quadrant = full_maps_1dir * (full_maps_1dir + 1) / 2;
     let full_maps = full_maps_1quadrant * 4 + 1;
+    let (full_maps_even, full_maps_odd) = even_odd_rhombus_squares(full_maps_1dir);
 
+    assert_eq!(full_maps, full_maps_even + full_maps_odd);
     let mut seen = vec![vec![Seen::default(); map[0].len()]; map.len()];
-    //let mut reachable = vec![vec![false; map[0].len()]; map.len()];
     let spos = map
         .iter()
         .enumerate()
@@ -227,7 +244,7 @@ fn part2(map: MapRef, steps: usize) -> usize {
         });
     });
     println!("there are {full_maps} full square maps in the rhombus");
-    let mega_rhombus_fullmaps_area = (seen_odd + seen_even) * (full_maps / 2);
+    let mega_rhombus_fullmaps_area = seen_odd * full_maps_odd + seen_even * full_maps_even;
     let mega_rhombus_corners_area = area_for(&seen_edges[&(start_dist, 0)], start_dist, true)
         + area_for(&seen_edges[&(end, start_dist)], start_dist, true)
         + area_for(&seen_edges[&(start_dist, end)], start_dist, true)
