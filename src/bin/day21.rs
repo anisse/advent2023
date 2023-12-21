@@ -218,7 +218,7 @@ fn part2(map: MapRef, steps: usize) -> usize {
         + area_for(&seen_edges[&(end, start_dist)], start_dist, true)
         + area_for(&seen_edges[&(start_dist, end)], start_dist, true)
         + area_for(&seen_edges[&(0, start_dist)], start_dist, true);
-    let mega_rhombus_edges_area = area_for(&seen_edges[&(0, 0)], start_dist, true) * full_maps_1dir
+    let mega_rhombus_edges_area = area_for(&seen_edges[&(0, 0)], end, false) * full_maps_1dir
         + area_for(&seen_edges[&(0, end)], end, false) * full_maps_1dir
         + area_for(&seen_edges[&(end, 0)], end, false) * full_maps_1dir
         + area_for(&seen_edges[&(end, 0)], end, false) * full_maps_1dir;
