@@ -77,6 +77,34 @@ fn _print_map(map: MapRef, seen: SeenMapRef) {
         println!();
     });
 }
+fn _print_map_max(map: MapRef, seen: SeenMapRef, max: usize) {
+    (0..map.len()).for_each(|y| {
+        (0..map[y].len()).for_each(|x| {
+            print!(
+                "{}",
+                match (map[y][x], &seen[y][x]) {
+                    (b'#', _) => "#",
+                    (b'S', _) => "S",
+                    (
+                        b'.',
+                        Seen {
+                            even: Some(ev),
+                            odd: _,
+                        },
+                    ) =>
+                        if *ev <= max {
+                            "O"
+                        } else {
+                            "."
+                        },
+                    (b'.', _) => ".",
+                    _ => unreachable!(),
+                }
+            );
+        });
+        println!();
+    });
+}
 
 fn explore(map: MapRef, seen: SeenMapRefMut, pos: (usize, usize), remaining_steps: usize) {
     if remaining_steps % 2 == 0 {
@@ -118,6 +146,14 @@ fn explore(map: MapRef, seen: SeenMapRefMut, pos: (usize, usize), remaining_step
 }
 
 fn part2(map: MapRef, steps: usize) -> usize {
+    assert_eq!(map.len(), map[0].len());
+    let start_dist = (map.len() - 1) / 2;
+    assert_eq!((steps - start_dist) % map.len(), 0);
+    // we remove the start steps (65) and skip the central map.
+    let full_maps_1dir = (steps - start_dist) / map.len() - 1; //remove corner
+    let full_maps_1quadrant = full_maps_1dir * (full_maps_1dir + 1) / 2;
+    let full_maps = full_maps_1quadrant * 4 + 1;
+
     let mut seen = vec![vec![Seen::default(); map[0].len()]; map.len()];
     //let mut reachable = vec![vec![false; map[0].len()]; map.len()];
     let spos = map
@@ -126,6 +162,8 @@ fn part2(map: MapRef, steps: usize) -> usize {
         .flat_map(|(y, l)| l.iter().position(|c| *c == b'S').map(|x| (x, y)))
         .next()
         .expect("S pos");
+    assert_eq!(spos, (start_dist, start_dist));
+    let end = map.len() - 1;
     //dbg!(&spos);
     explore_full(map, &mut seen, spos);
     let seen_even = seen
@@ -148,38 +186,56 @@ fn part2(map: MapRef, steps: usize) -> usize {
     let mut seen_edges = HashMap::new();
     (0..map.len()).for_each(|y| {
         (0..map[0].len()).for_each(|x| {
-            if x != 0 && x != map[0].len() - 1 && y != 0 && y != map.len() - 1 {
+            if ![
+                (0, 0),
+                (0, start_dist),
+                (0, end),
+                (start_dist, 0),
+                //(start_dist, start_dist),
+                (start_dist, end),
+                (end, 0),
+                (end, start_dist),
+                (end, end),
+            ]
+            .contains(&(x, y))
+            {
                 return;
             }
-            /*
-            if seen[y][x].even.is_none() {
-                return;
-            }
-            */
             let mut edge = vec![vec![Seen::default(); map[0].len()]; map.len()];
             explore_full(map, &mut edge, (x, y));
+            println!("for {x}, {y}");
+            if [(0, 0), (0, end), (end, 0), (end, end)].contains(&(x, y)) {
+                _print_map_max(map, &edge, end);
+            } else {
+                _print_map_max(map, &edge, start_dist);
+            }
             seen_edges.insert((x, y), edge);
         });
     });
-    seen_edges.iter().for_each(|(coord, seen)| {
-        println!("For {coord:?}",);
-        //_print_map(map, seen);
-        println!(
-            "For {coord:?}, max to exit is {}",
-            seen.iter()
-                .flatten()
-                .filter(|seen_at| seen_at.even.is_some() || seen_at.odd.is_some())
-                //.inspect(|seen_at| println!("{seen_at:?}"))
-                .map(|seen_at| seen_at.even.unwrap_or_else(|| seen_at.odd.unwrap()))
-                .max()
-                .expect("a max")
-        );
-    });
-    println!();
-    _print_map(map, &seen);
+    println!("there are {full_maps} full square maps in the rhombus");
+    let mega_rhombus_fullmaps_area = (seen_odd + seen_even) * (full_maps / 2);
+    let mega_rhombus_corners_area = area_for(&seen_edges[&(start_dist, 0)], start_dist, true)
+        + area_for(&seen_edges[&(end, start_dist)], start_dist, true)
+        + area_for(&seen_edges[&(start_dist, end)], start_dist, true)
+        + area_for(&seen_edges[&(0, start_dist)], start_dist, true);
+    let mega_rhombus_edges_area = area_for(&seen_edges[&(0, 0)], start_dist, true) * full_maps_1dir
+        + area_for(&seen_edges[&(0, end)], end, false) * full_maps_1dir
+        + area_for(&seen_edges[&(end, 0)], end, false) * full_maps_1dir
+        + area_for(&seen_edges[&(end, 0)], end, false) * full_maps_1dir;
+    mega_rhombus_fullmaps_area + mega_rhombus_corners_area + mega_rhombus_edges_area
+}
+
+fn area_for(seen: SeenMapRef, steps: usize, even: bool) -> usize {
     seen.iter()
         .flatten()
-        .filter(|seen_at| seen_at.even.is_some())
+        .filter(|seen_at| {
+            let s = if even { &seen_at.even } else { &seen_at.odd };
+            if let Some(count) = *s {
+                count <= steps
+            } else {
+                false
+            }
+        })
         .count()
 }
 
