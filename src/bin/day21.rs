@@ -34,7 +34,7 @@ fn part1(map: MapRef, steps: usize) -> usize {
         .flat_map(|(y, l)| l.iter().position(|c| *c == b'S').map(|x| (x, y)))
         .next()
         .expect("S pos");
-    //dbg!(&spos);
+    dbg!(&spos);
     explore_full(map, &mut seen, spos);
     _print_map_max(map, &seen, steps, steps % 2 == 0);
     seen.iter()
@@ -399,4 +399,48 @@ fn test() {
     );
 
     assert_eq!(part1(&map_big, 12), part2(&map_small, 12));
+}
+
+#[test]
+fn test_big() {
+    let map_small = parse(
+        ".......
+....#..
+....##.
+...S...
+..#....
+.....#.
+.......",
+    );
+    let repeat = 3;
+    let steps = (map_small.len() - 1) / 2 + map_small.len() * repeat;
+    println!("Custom map");
+    assert_eq!(
+        part1(&build_map_big(&map_small, repeat), steps),
+        part2(&map_small, steps)
+    );
+}
+#[cfg(test)]
+fn build_map_big(map: MapRef, repeat: usize) -> Map {
+    assert_eq!(map.len(), map[0].len());
+    let l = map.len();
+    let total = (repeat * 2 + 1) * l;
+    (0..total)
+        .map(|y| {
+            (0..total)
+                .map(|x| {
+                    let s = map[y % l][x % l];
+                    if s == b'S' {
+                        if y == total / 2 && x == total / 2 {
+                            s
+                        } else {
+                            b'.'
+                        }
+                    } else {
+                        s
+                    }
+                })
+                .collect()
+        })
+        .collect()
 }
