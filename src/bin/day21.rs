@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use advent2023::*;
 fn main() {
     let map = parse(input!());
@@ -5,7 +7,7 @@ fn main() {
     let res = part1(&map, 64);
     println!("Part 1: {}", res);
     //part 2
-    let res = part2(&map);
+    let res = part2(&map, 26501365);
     println!("Part 2: {}", res);
 }
 
@@ -33,9 +35,9 @@ fn part1(map: MapRef, steps: usize) -> usize {
         .flat_map(|(y, l)| l.iter().position(|c| *c == b'S').map(|x| (x, y)))
         .next()
         .expect("S pos");
-    dbg!(&spos);
+    //dbg!(&spos);
     explore(map, &mut seen, spos, steps);
-    _print_map(map, &seen);
+    //_print_map(map, &seen);
     seen.iter()
         .flatten()
         .filter(|seen_at| seen_at.even.is_some())
@@ -71,7 +73,7 @@ fn explore(map: MapRef, seen: SeenMapRefMut, pos: (usize, usize), remaining_step
     } else {
         seen[pos.1][pos.0].odd = Some(remaining_steps);
     }
-    println!("Now at pos {pos:?}, remaining: {remaining_steps}");
+    //println!("Now at pos {pos:?}, remaining: {remaining_steps}");
     if remaining_steps == 0 {
         return;
     }
@@ -79,24 +81,12 @@ fn explore(map: MapRef, seen: SeenMapRefMut, pos: (usize, usize), remaining_step
     for d in [(0, 1), (0, -1), (1, 0), (-1, 0)].into_iter() {
         let inext = (ipos.0 + d.0, ipos.1 + d.1);
         let next = (inext.0 as usize, inext.1 as usize);
-        if d.0 == -1 {
-            println!("{remaining_steps}: x - 1: {inext:?}");
-        }
         if inext.0 < 0 || next.0 >= map[0].len() || inext.1 < 0 || next.1 >= map.len() {
             continue;
         }
         if map[next.1][next.0] == b'#' {
             continue;
         }
-        /*
-        if let Seen {
-            even: None,
-            odd: None,
-        } = seen[next.1][next.0]
-        {
-            explore(map, seen, next, remaining_steps - 1);
-        }
-        */
         let is_even = (remaining_steps - 1) % 2 == 0;
         let s = &seen[next.1][next.0];
         let go = if is_even {
@@ -116,24 +106,82 @@ fn explore(map: MapRef, seen: SeenMapRefMut, pos: (usize, usize), remaining_step
     }
 }
 
-fn part2(map: MapRef) -> usize {
-    for _ in map {
-        todo!()
-    }
-    42
+fn part2(map: MapRef, steps: usize) -> usize {
+    let mut seen = vec![vec![Seen::default(); map[0].len()]; map.len()];
+    //let mut reachable = vec![vec![false; map[0].len()]; map.len()];
+    let spos = map
+        .iter()
+        .enumerate()
+        .flat_map(|(y, l)| l.iter().position(|c| *c == b'S').map(|x| (x, y)))
+        .next()
+        .expect("S pos");
+    //dbg!(&spos);
+    let max_steps: usize = map.len(); // We are lucky ROWS == COLUMNS
+    explore(map, &mut seen, spos, max_steps);
+    let mut seen_edges = HashMap::new();
+    let seen_even = seen
+        .iter()
+        .flatten()
+        .filter(|seen_at| seen_at.even.is_some())
+        .count();
+    let seen_odd = seen
+        .iter()
+        .flatten()
+        .filter(|seen_at| seen_at.odd.is_some())
+        .count();
+    println!("In map: {seen_odd} odd and {seen_even} even");
+    println!("To reach (0, 0): {:?}", seen[0][0]);
+    println!(
+        "To reach (len, len): {:?}",
+        seen[map.len() - 1][map[0].len() - 1]
+    );
+
+    (0..map.len()).for_each(|y| {
+        (0..map[0].len()).for_each(|x| {
+            if x != 0 && x != map[0].len() - 1 && y != 0 && y != map.len() - 1 {
+                return;
+            }
+            /*
+            if seen[y][x].even.is_none() {
+                return;
+            }
+            */
+            let mut edge = vec![vec![Seen::default(); map[0].len()]; map.len()];
+            explore(map, &mut edge, (x, y), max_steps);
+            seen_edges.insert((x, y), edge);
+        });
+    });
+    println!("For {max_steps}");
+    _print_map(map, &seen);
+    seen.iter()
+        .flatten()
+        .filter(|seen_at| seen_at.even.is_some())
+        .count()
 }
 
 #[test]
 fn test() {
     let map = parse(sample!());
     //part 1
-    let res = part1(&map, 2);
-    assert_eq!(res, 4);
-    //let res = part1(&map, 3);
-    //assert_eq!(res, 6);
-    let res = part1(&map, 6);
-    assert_eq!(res, 16);
+    for (steps, res) in [(2, 4), (3, 6), (6, 16)].into_iter() {
+        assert_eq!(
+            res,
+            part1(&map, steps),
+            "At {steps} steps, expected {res} positions"
+        );
+    }
     //part 2
-    //let res = part2(&map);
-    //assert_eq!(res, 42);
+    for (steps, res) in [
+        (6, 16),
+        (10, 50),
+        (50, 1594),
+        (100, 6536),
+        (500, 167004),
+        (1000, 668697),
+        (5000, 16733044),
+    ]
+    .into_iter()
+    {
+        assert_eq!(res, part2(&map, steps));
+    }
 }
