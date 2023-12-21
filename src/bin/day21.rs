@@ -143,9 +143,9 @@ fn part2(map: MapRef, steps: usize) -> usize {
     let full_maps_1dir = (steps - start_dist) / map.len() - 1; //remove corner
     let full_maps_1quadrant = full_maps_1dir * (full_maps_1dir + 1) / 2;
     let full_maps = full_maps_1quadrant * 4 + 1;
-    let (full_maps_even, full_maps_odd) = even_odd_rhombus_squares(full_maps_1dir);
+    let (full_maps_center_parity, full_maps_ext_parity) = even_odd_rhombus_squares(full_maps_1dir);
 
-    assert_eq!(full_maps, full_maps_even + full_maps_odd);
+    assert_eq!(full_maps, full_maps_center_parity + full_maps_ext_parity);
     let mut seen = vec![vec![Seen::default(); map[0].len()]; map.len()];
     let spos = map
         .iter()
@@ -207,8 +207,13 @@ fn part2(map: MapRef, steps: usize) -> usize {
             seen_edges.insert((x, y), edge);
         });
     });
-    println!("there are {full_maps} = {full_maps_odd} odds + {full_maps_even} even square maps in the rhombus");
     println!("In full square maps: {seen_odd} odd and {seen_even} even");
+    let (full_maps_even, full_maps_odd) = if steps % 2 == 0 {
+        (full_maps_center_parity, full_maps_ext_parity)
+    } else {
+        (full_maps_ext_parity, full_maps_center_parity)
+    };
+    println!("there are {full_maps} = {full_maps_odd} odds + {full_maps_even} even square maps in the rhombus");
     let mega_rhombus_fullmaps_area = seen_odd * full_maps_odd + seen_even * full_maps_even;
     let mega_rhombus_corners_area = area_for(&seen_edges[&(start_dist, 0)], end, true)
         + area_for(&seen_edges[&(end, start_dist)], end, true)
