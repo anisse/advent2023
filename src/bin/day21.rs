@@ -207,12 +207,10 @@ fn part2(map: MapRef, steps: usize) -> usize {
         .count();
     assert_eq!(seen_odd, area_for(&seen, end, false));
     assert_eq!(seen_even, area_for(&seen, end, true));
-    println!("In map: {seen_odd} odd and {seen_even} even");
-    println!("To reach (0, 0): {:?}", seen[0][0]);
-    println!(
-        "To reach (len, len): {:?}",
-        seen[map.len() - 1][map[0].len() - 1]
-    );
+    println!("Even full:");
+    _print_map_max(map, &seen, end, true);
+    println!("Odd full:");
+    _print_map_max(map, &seen, end, false);
 
     let mut seen_edges = HashMap::new();
     (0..map.len()).for_each(|y| {
@@ -234,25 +232,38 @@ fn part2(map: MapRef, steps: usize) -> usize {
             }
             let mut edge = vec![vec![Seen::default(); map[0].len()]; map.len()];
             explore_full(map, &mut edge, (x, y));
-            println!("for {x}, {y}");
+            print!("for {x}, {y}; ");
             if [(0, 0), (0, end), (end, 0), (end, end)].contains(&(x, y)) {
-                _print_map_max(map, &edge, end, false);
+                println!("edge 1:");
+                _print_map_max(map, &edge, start_dist, false);
+                println!("         edge 2:");
+                _print_map_max(map, &edge, end + start_dist, true);
             } else {
-                _print_map_max(map, &edge, start_dist, true);
+                println!("corner:");
+                _print_map_max(map, &edge, end, true);
             }
             seen_edges.insert((x, y), edge);
         });
     });
-    println!("there are {full_maps} full square maps in the rhombus");
+    println!("there are {full_maps} = {full_maps_odd} odds + {full_maps_even} even square maps in the rhombus");
+    println!("In full square maps: {seen_odd} odd and {seen_even} even");
     let mega_rhombus_fullmaps_area = seen_odd * full_maps_odd + seen_even * full_maps_even;
-    let mega_rhombus_corners_area = area_for(&seen_edges[&(start_dist, 0)], start_dist, true)
-        + area_for(&seen_edges[&(end, start_dist)], start_dist, true)
-        + area_for(&seen_edges[&(start_dist, end)], start_dist, true)
-        + area_for(&seen_edges[&(0, start_dist)], start_dist, true);
-    let mega_rhombus_edges_area = area_for(&seen_edges[&(0, 0)], end, false) * full_maps_1dir
-        + area_for(&seen_edges[&(0, end)], end, false) * full_maps_1dir
-        + area_for(&seen_edges[&(end, 0)], end, false) * full_maps_1dir
-        + area_for(&seen_edges[&(end, end)], end, false) * full_maps_1dir;
+    let mega_rhombus_corners_area = area_for(&seen_edges[&(start_dist, 0)], end, true)
+        + area_for(&seen_edges[&(end, start_dist)], end, true)
+        + area_for(&seen_edges[&(start_dist, end)], end, true)
+        + area_for(&seen_edges[&(0, start_dist)], end, true);
+    let mega_rhombus_edges_area = /* edges
+       */ area_for(&seen_edges[&(0, 0)], start_dist, false) * (full_maps_1dir + 1)
+        + area_for(&seen_edges[&(0, 0)], end + start_dist, true) * full_maps_1dir
+
+        + area_for(&seen_edges[&(0, end)], start_dist, false) * (full_maps_1dir + 1)
+        + area_for(&seen_edges[&(0, end)], end + start_dist, true) * full_maps_1dir
+
+        + area_for(&seen_edges[&(end, 0)], start_dist, false) * (full_maps_1dir + 1)
+        + area_for(&seen_edges[&(end, 0)], end + start_dist, true) * full_maps_1dir
+
+        + area_for(&seen_edges[&(end, end)], start_dist, false) * (full_maps_1dir + 1)
+        + area_for(&seen_edges[&(end, end)], end + start_dist, true) * full_maps_1dir;
     mega_rhombus_fullmaps_area + mega_rhombus_corners_area + mega_rhombus_edges_area
 }
 
