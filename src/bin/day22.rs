@@ -239,14 +239,11 @@ fn would_fall(
     supported_by: &[Vec<usize>],
 ) -> usize {
     fallen.insert(idx);
-    'outer: for s in supports[idx].iter() {
-        for sb in supported_by[*s].iter() {
-            if !fallen.contains(sb) {
-                continue 'outer;
-            }
+    for s in supports[idx].iter() {
+        if supported_by[*s].iter().all(|sb| fallen.contains(sb)) {
+            // s has fallen
+            would_fall(*s, fallen, supports, supported_by);
         }
-        // s has fallen
-        would_fall(*s, fallen, supports, supported_by);
     }
     fallen.len() - 1
 }
