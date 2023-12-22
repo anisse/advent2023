@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use advent2023::*;
 
 fn main() {
@@ -227,28 +229,35 @@ where
     I: Iterator<Item = ParsedItem>,
 {
     let (bricks, supports, supported_by) = common_compress(things);
+    /*
     let mut would_fall = vec![0; bricks.len()];
     (0..bricks.len()).for_each(|b| {
         if bricks[b].start[Z] == 1 {
             would_fall_x(b, &mut would_fall, &supports, &supported_by);
         }
     });
-    (0..bricks.len()).map(|b| would_fall[b]).sum()
+    */
+    (0..bricks.len())
+        .map(|b| would_fall(b, &mut HashSet::new(), &supports, &supported_by))
+        .sum()
 }
-fn would_fall_x(
+fn would_fall(
     idx: usize,
-    would_fall: &mut [usize],
+    fallen: &mut HashSet<usize>,
     supports: &[Vec<usize>],
     supported_by: &[Vec<usize>],
-) {
-    let mut count = 0;
-    for s in supports[idx].iter() {
-        would_fall_x(*s, would_fall, supports, supported_by);
-        if supported_by[*s].len() == 1 {
-            count += 1 + would_fall[*s];
+) -> usize {
+    fallen.insert(idx);
+    'outer: for s in supports[idx].iter() {
+        for sb in supported_by[*s].iter() {
+            if !fallen.contains(sb) {
+                continue 'outer;
+            }
         }
+        // s has fallen
+        would_fall(*s, fallen, supports, supported_by);
     }
-    would_fall[idx] = count;
+    fallen.len() - 1
 }
 
 #[test]
