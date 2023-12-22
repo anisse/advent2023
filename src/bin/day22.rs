@@ -195,7 +195,6 @@ impl Brick {
 }
 #[test]
 fn test_overlap() {
-    // mod does not overlap after 2 spaces
     let b1 = Brick {
         start: [0, 1, 3],
         end: [2, 1, 3],
