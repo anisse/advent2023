@@ -3,8 +3,8 @@ use advent2023::*;
 fn main() {
     let things = parse(input!());
     //part 1
-    let res = part1(things.clone());
-    println!("Part 1: {}", res);
+    //let res = part1(things.clone());
+    //println!("Part 1: {}", res);
     //part 2
     let res = part2(things);
     println!("Part 2: {}", res);
@@ -34,7 +34,7 @@ fn parse(input: &str) -> impl Iterator<Item = ParsedItem> + Clone + '_ {
         }
     })
 }
-fn part1<I>(things: I) -> usize
+fn common_compress<I>(things: I) -> (Vec<Brick>, Vec<Vec<usize>>, Vec<Vec<usize>>)
 where
     I: Iterator<Item = ParsedItem>,
 {
@@ -53,9 +53,9 @@ where
             while end_pos > 0 {
                 end_pos -= 1;
                 let b1 = &bricks[bricks_end[end_pos]];
-                println!("Evaluating if {b1:?} supports {b:?}");
+                //println!("Evaluating if {b1:?} supports {b:?}");
                 if b1.end[Z] + 1 < b.start[Z] {
-                    println!("Stopping, {b1:?} is too low");
+                    //   println!("Stopping, {b1:?} is too low");
                     break;
                 }
                 if b.supported_by(b1) {
@@ -67,20 +67,29 @@ where
         .collect();
     let mut supports: Vec<Vec<usize>> = vec![vec![]; bricks.len()];
     supported_by.iter().enumerate().for_each(|(i, sby)| {
-        println!("Brick {i} is supported by {} bricks", sby.len());
+        //println!("Brick {i} is supported by {} bricks", sby.len());
         for s in sby.iter() {
             supports[*s].push(i);
         }
     });
+    (bricks, supports, supported_by)
+}
+fn part1<I>(things: I) -> usize
+where
+    I: Iterator<Item = ParsedItem>,
+{
+    let (bricks, supports, supported_by) = common_compress(things);
     (0..bricks.len())
         .map(|b| {
-            println!("Brick {b} supports {} bricks", supports[b].len());
+            //println!("Brick {b} supports {} bricks", supports[b].len());
             supports[b].is_empty()
                 || supports[b].iter().all(|s| {
+                    /*
                     println!(
                         "Brick {b} supports brick {s} which is itself supported by {} bricks",
                         supported_by[*s].len()
                     );
+                    */
                     supported_by[*s].len() > 1
                     // can be disintegrated
                 })
@@ -92,9 +101,9 @@ where
 fn fall(bricks: &mut [Brick]) {
     bricks.sort_by(|a, b| a.start[Z].cmp(&b.start[Z]));
     let mut bricks_end: Vec<_> = (0..bricks.len()).collect();
-    println!("bricks_end: {bricks_end:?}");
+    //println!("bricks_end: {bricks_end:?}");
     bricks_end.sort_by(|a, b| bricks[*a].end[Z].cmp(&bricks[*b].end[Z]));
-    println!("bricks_end sorted: {bricks_end:?}");
+    //println!("bricks_end sorted: {bricks_end:?}");
 
     for idx in 0..bricks.len() {
         let space = may_fall(idx, bricks, &bricks_end);
@@ -217,10 +226,29 @@ fn part2<I>(things: I) -> usize
 where
     I: Iterator<Item = ParsedItem>,
 {
-    for _ in things {
-        todo!()
+    let (bricks, supports, supported_by) = common_compress(things);
+    let mut would_fall = vec![0; bricks.len()];
+    (0..bricks.len()).for_each(|b| {
+        if bricks[b].start[Z] == 1 {
+            would_fall_x(b, &mut would_fall, &supports, &supported_by);
+        }
+    });
+    (0..bricks.len()).map(|b| would_fall[b]).sum()
+}
+fn would_fall_x(
+    idx: usize,
+    would_fall: &mut [usize],
+    supports: &[Vec<usize>],
+    supported_by: &[Vec<usize>],
+) {
+    let mut count = 0;
+    for s in supports[idx].iter() {
+        would_fall_x(*s, would_fall, supports, supported_by);
+        if supported_by[*s].len() == 1 {
+            count += 1 + would_fall[*s];
+        }
     }
-    42
+    would_fall[idx] = count;
 }
 
 #[test]
@@ -230,6 +258,6 @@ fn test() {
     let res = part1(things.clone());
     assert_eq!(res, 5);
     //part 2
-    //let res = part2(things);
-    //assert_eq!(res, 42);
+    let res = part2(things);
+    assert_eq!(res, 7);
 }
