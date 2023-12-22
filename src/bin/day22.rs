@@ -5,8 +5,8 @@ use advent2023::*;
 fn main() {
     let things = parse(input!());
     //part 1
-    //let res = part1(things.clone());
-    //println!("Part 1: {}", res);
+    let res = part1(things.clone());
+    println!("Part 1: {}", res);
     //part 2
     let res = part2(things);
     println!("Part 2: {}", res);
@@ -19,7 +19,7 @@ struct Brick {
     end: Pos,
 }
 const X: usize = 0;
-const Y: usize = 1;
+//const Y: usize = 1;
 const Z: usize = 2;
 fn parse(input: &str) -> impl Iterator<Item = ParsedItem> + Clone + '_ {
     input.lines().map(|x| {
@@ -229,14 +229,6 @@ where
     I: Iterator<Item = ParsedItem>,
 {
     let (bricks, supports, supported_by) = common_compress(things);
-    /*
-    let mut would_fall = vec![0; bricks.len()];
-    (0..bricks.len()).for_each(|b| {
-        if bricks[b].start[Z] == 1 {
-            would_fall_x(b, &mut would_fall, &supports, &supported_by);
-        }
-    });
-    */
     (0..bricks.len())
         .map(|b| would_fall(b, &mut HashSet::new(), &supports, &supported_by))
         .sum()
