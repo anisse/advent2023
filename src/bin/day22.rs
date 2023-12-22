@@ -1,7 +1,4 @@
-use std::collections::HashMap;
-
 use advent2023::*;
-use itertools::Itertools;
 
 fn main() {
     let things = parse(input!());
@@ -43,24 +40,70 @@ where
 {
     let mut bricks: Vec<_> = things.collect();
     fall(&mut bricks);
-    42
-}
-
-fn is_support(idx: usize, bricks: &[Brick], bricks_end: &[usize]) -> bool {
-    false
+    let mut bricks_end: Vec<_> = (0..bricks.len()).collect();
+    bricks_end.sort_by(|a, b| bricks[*a].end[Z].cmp(&bricks[*b].end[Z]));
+    let supported_by: Vec<Vec<usize>> = (0..bricks.len())
+        .map(|idx| {
+            let b = &bricks[idx];
+            let mut end_pos = bricks_end
+                .iter()
+                .position(|i| *i == idx)
+                .expect("index not found in end sorted array");
+            let mut supported_by = vec![];
+            while end_pos > 0 {
+                end_pos -= 1;
+                let b1 = &bricks[bricks_end[end_pos]];
+                println!("Evaluating if {b1:?} supports {b:?}");
+                if b1.end[Z] + 1 < b.start[Z] {
+                    println!("Stopping, {b1:?} is too low");
+                    break;
+                }
+                if b.supported_by(b1) {
+                    supported_by.push(bricks_end[end_pos]);
+                }
+            }
+            supported_by
+        })
+        .collect();
+    let mut supports: Vec<Vec<usize>> = vec![vec![]; bricks.len()];
+    supported_by.iter().enumerate().for_each(|(i, sby)| {
+        println!("Brick {i} is supported by {} bricks", sby.len());
+        for s in sby.iter() {
+            supports[*s].push(i);
+        }
+    });
+    (0..bricks.len())
+        .map(|b| {
+            println!("Brick {b} supports {} bricks", supports[b].len());
+            supports[b].is_empty()
+                || supports[b].iter().all(|s| {
+                    println!(
+                        "Brick {b} supports brick {s} which is itself supported by {} bricks",
+                        supported_by[*s].len()
+                    );
+                    supported_by[*s].len() > 1
+                    // can be disintegrated
+                })
+        })
+        .filter(|x| *x)
+        .count()
 }
 
 fn fall(bricks: &mut [Brick]) {
     bricks.sort_by(|a, b| a.start[Z].cmp(&b.start[Z]));
     let mut bricks_end: Vec<_> = (0..bricks.len()).collect();
+    println!("bricks_end: {bricks_end:?}");
     bricks_end.sort_by(|a, b| bricks[*a].end[Z].cmp(&bricks[*b].end[Z]));
+    println!("bricks_end sorted: {bricks_end:?}");
 
     for idx in 0..bricks.len() {
         let space = may_fall(idx, bricks, &bricks_end);
+        /*
         println!(
             "Brick {idx} {:?} has {space} empty spaces below it",
             &bricks[idx]
         );
+        */
         if space > 0 {
             bricks[idx].start[Z] -= space;
             bricks[idx].end[Z] -= space;
@@ -70,10 +113,12 @@ fn fall(bricks: &mut [Brick]) {
 }
 fn may_fall(idx: usize, bricks: &[Brick], bricks_end: &[usize]) -> usize {
     let b = &bricks[idx];
+    //println!("may fall {idx}, bricks_end: {bricks_end:?}");
     let end_pos = bricks_end
-        .binary_search(&idx)
+        .iter()
+        .position(|i| *i == idx)
         .expect("index not found in end sorted array");
-    println!("brick {idx} is at {end_pos} in end_z array");
+    //println!("brick {idx} is at {end_pos} in end_z array");
     if end_pos == 0 {
         return 0;
     }
@@ -81,10 +126,10 @@ fn may_fall(idx: usize, bricks: &[Brick], bricks_end: &[usize]) -> usize {
     for below in (0..end_pos).rev() {
         let b2 = &bricks[bricks_end[below]];
         if b.overlap(b2) {
-            println!("{b:?} overlaps {b2:?}");
+            //println!("{b:?} overlaps {b2:?}");
             return 0;
         }
-        println!();
+        //println!();
         let mut b1 = b.clone();
         let mut space = 0;
         loop {
@@ -94,14 +139,14 @@ fn may_fall(idx: usize, bricks: &[Brick], bricks_end: &[usize]) -> usize {
             b1.start[Z] -= 1;
             b1.end[Z] -= 1;
             if b1.overlap(b2) {
-                println!("mod {b:?} overlaps {b2:?} after {space} spaces");
+                //println!("mod {b:?} overlaps {b2:?} after {space} spaces");
                 break;
             } else {
-                println!("mod {b1:?} does not overlap {b2:?} after {space} spaces");
+                //println!("mod {b1:?} does not overlap {b2:?} after {space} spaces");
             }
             space += 1;
         }
-        println!("{b:?} does not overlap {b2:?}, and has {space} spaces below");
+        //println!("{b:?} does not overlap {b2:?}, and has {space} spaces below");
         if space < min_space {
             min_space = space;
         }
@@ -123,6 +168,18 @@ impl Brick {
             }
         });
         touch.iter().all(|v| *v)
+    }
+    // Used to determine if self supports b
+    fn supports(&self, b: &Brick) -> bool {
+        !self.overlap(b) && {
+            let mut b1 = self.clone();
+            b1.end[Z] += 1;
+            b1.overlap(b)
+        }
+    }
+    // Used to determine if b supports self
+    fn supported_by(&self, b: &Brick) -> bool {
+        b.supports(self)
     }
 }
 #[test]
@@ -171,8 +228,8 @@ fn test() {
     let things = parse(sample!());
     //part 1
     let res = part1(things.clone());
-    assert_eq!(res, 42);
+    assert_eq!(res, 5);
     //part 2
-    let res = part2(things);
-    assert_eq!(res, 42);
+    //let res = part2(things);
+    //assert_eq!(res, 42);
 }
