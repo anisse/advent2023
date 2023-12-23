@@ -1,4 +1,7 @@
-use std::collections::HashSet;
+use std::{
+    collections::{HashMap, HashSet},
+    thread,
+};
 
 use advent2023::*;
 fn main() {
@@ -71,20 +74,37 @@ fn part2(map: MapRef) -> usize {
         .iter()
         .position(|c| *c == b'.')
         .expect("end pos");
-    longest_path2(
-        map,
-        (start_x, 0),
-        (end_x, map.len() - 1),
-        &mut HashSet::new(),
-    )
+
+    let map2 = map.to_vec();
+    // Needs a bigger stack
+    let child = thread::Builder::new()
+        .stack_size(32 * 1024 * 1024)
+        .spawn(move || {
+            longest_path2(
+                &map2,
+                (start_x, 0),
+                (end_x, map2.len() - 1),
+                &mut HashSet::new(),
+                &mut HashMap::new(),
+            )
+        })
+        .unwrap();
+
+    child.join().unwrap()
 }
 
-fn longest_path2(map: MapRef, pos: Pos, end: Pos, current_path: &mut HashSet<Pos>) -> usize {
+fn longest_path2(
+    map: MapRef,
+    pos: Pos,
+    end: Pos,
+    current_path: &mut HashSet<Pos>,
+    maxes: &mut HashMap<Pos, usize>,
+) -> usize {
     if pos == end {
         return current_path.len();
     }
     let ipos = (pos.0 as isize, pos.1 as isize);
-    let mut max = 0;
+    let mut max_current = 0;
     for d in [(0, 1), (0, -1), (1, 0), (-1, 0)].into_iter() {
         let inext = (ipos.0 + d.0, ipos.1 + d.1);
         let next = (inext.0 as usize, inext.1 as usize);
@@ -97,14 +117,24 @@ fn longest_path2(map: MapRef, pos: Pos, end: Pos, current_path: &mut HashSet<Pos
         if current_path.contains(&next) {
             continue;
         }
+        let max = *maxes.entry(next).or_insert(0);
+        if max > current_path.len() {
+            continue;
+        }
         current_path.insert(next);
-        let len = longest_path2(map, next, end, current_path);
+        let len = longest_path2(map, next, end, current_path, maxes);
         current_path.remove(&next);
         if len > max {
-            max = len;
+            maxes.insert(next, len);
+        }
+        if len > max_current {
+            max_current = len;
         }
     }
-    max
+    if *maxes.entry(pos).or_insert(0) < max_current {
+        maxes.insert(pos, max_current);
+    }
+    maxes[&pos]
 }
 
 #[test]
@@ -116,4 +146,7 @@ fn test() {
     //part 2
     let res = part2(&map);
     assert_eq!(res, 154);
+    let map = parse(input!());
+    let res = part2(&map);
+    assert_eq!(res, 6258);
 }
