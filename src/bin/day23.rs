@@ -150,3 +150,15 @@ fn test() {
     let res = part2(&map);
     assert_eq!(res, 6258);
 }
+
+#[test]
+fn test_custom_map() {
+    let map = parse(concat!(
+        //start
+        "#.###\n", ".....\n", //"#.#.#\n",
+        // ".....\n",
+        ".....\n", //end
+        "###.#\n",
+    ));
+    assert_eq!(part1(&map), part2(&map));
+}
