@@ -76,7 +76,7 @@ fn part2(map: MapRef) -> usize {
     let map = map.to_vec();
     // Needs a bigger stack
     let child = thread::Builder::new()
-        .stack_size(8 * 1024 * 1024) // this is mostly for debug mode with full input
+        .stack_size(4 * 1024 * 1024) // this is mostly for debug mode with full input
         .spawn(move || {
             longest_path2_bruteforce(
                 &map,
