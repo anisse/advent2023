@@ -146,6 +146,11 @@ fn test() {
     //part 2
     let res = part2(&map);
     assert_eq!(res, 154);
+}
+
+#[cfg(not(feature = "ci_no_input"))]
+#[test]
+fn test_real_input() {
     let map = parse(input!());
     let res = part2(&map);
     assert_eq!(res, 6258);
