@@ -59,7 +59,7 @@ where
 }
 
 fn intersect_in_2d(zone: (f64, f64), a: &Stone, b: &Stone) -> bool {
-    if let Some((xi, yi)) = intersect_pos_2d(a, b) {
+    if let Some((xi, yi)) = a.intersect_pos_2d(b) {
         if !a.forward_in_time_2d(xi, yi) || !b.forward_in_time_2d(xi, yi) {
             return false;
         }
@@ -71,43 +71,43 @@ fn intersect_in_2d(zone: (f64, f64), a: &Stone, b: &Stone) -> bool {
     false
 }
 
-fn intersect_pos_2d(a: &Stone, b: &Stone) -> Option<(f64, f64)> {
-    // we have:
-    // speed, vector: (N, M), start: I, J
-    // At Y= J  X = I
-    // At Y = J+M, X = N+I
-    // At X = 0, Y =
-    // coeff = ( ( J - (J + M ))/  (I - (I + N)) = M / N
-    // y = coeff * x + start
-    // at X = I, Y = J
-    // J = coeff*I + start
-    // start = J - coeff * I
-    // start = J - M*I/N
-    //
-    // y = (M/N) * x + J - M*I/N
-    // y = (M/N) * (x -I) + J
-    //
-    // intersection :
-    // xi = ( startb - starta) / (coeffa - coeffb)
-    // yi = coeffa * xi  + starta
-    //
-    // Do they intersect *forward* in time ? ; i.e after the start coordinate
-    // Only if :
-    // yi > each J if its M > 0 and yi < J if M < 0
-    // xi > each I if its N > 0 and xi < I if N < 0
-    let (coeff_a, start_a) = a.vector_to_affine();
-    let (coeff_b, start_b) = b.vector_to_affine();
-    if coeff_a - coeff_b == 0.0 {
-        return None;
-    }
-    // xi = ( startb - starta) / (coeffa - coeffb)
-    let xi = (start_b - start_a) / (coeff_a - coeff_b);
-    // yi = coeffa * xi  + starta
-    let yi = coeff_a * xi + start_a;
-    Some((xi, yi))
-}
 impl Stone {
-    fn vector_to_affine(&self) -> (f64, f64) {
+    fn intersect_pos_2d(&self, b: &Stone) -> Option<(f64, f64)> {
+        // we have:
+        // speed, vector: (N, M), start: I, J
+        // At Y= J  X = I
+        // At Y = J+M, X = N+I
+        // At X = 0, Y =
+        // coeff = ( ( J - (J + M ))/  (I - (I + N)) = M / N
+        // y = coeff * x + start
+        // at X = I, Y = J
+        // J = coeff*I + start
+        // start = J - coeff * I
+        // start = J - M*I/N
+        //
+        // y = (M/N) * x + J - M*I/N
+        // y = (M/N) * (x -I) + J
+        //
+        // intersection :
+        // xi = ( startb - starta) / (coeffa - coeffb)
+        // yi = coeffa * xi  + starta
+        //
+        // Do they intersect *forward* in time ? ; i.e after the start coordinate
+        // Only if :
+        // yi > each J if its M > 0 and yi < J if M < 0
+        // xi > each I if its N > 0 and xi < I if N < 0
+        let (coeff_a, start_a) = self.vector_to_affine_2d();
+        let (coeff_b, start_b) = b.vector_to_affine_2d();
+        if coeff_a - coeff_b == 0.0 {
+            return None;
+        }
+        // xi = ( startb - starta) / (coeffa - coeffb)
+        let xi = (start_b - start_a) / (coeff_a - coeff_b);
+        // yi = coeffa * xi  + starta
+        let yi = coeff_a * xi + start_a;
+        Some((xi, yi))
+    }
+    fn vector_to_affine_2d(&self) -> (f64, f64) {
         (
             // coeff = ( ( J - (J + M ))/  (I - (I + N)) = M / N
             self.speed.y as f64 / self.speed.x as f64,
@@ -215,7 +215,7 @@ fn test_intersect() {
     ]
     .into_iter()
     {
-        let i = intersect_pos_2d(&a, &b);
+        let i = a.intersect_pos_2d(&b);
         if pos.is_none() {
             assert!(i.is_none());
         }
