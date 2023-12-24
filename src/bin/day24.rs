@@ -246,7 +246,84 @@ where
 type Dim = (i64, i64);
 
 fn cross_dim(stones: &[Dim]) -> (i64, i64) {
+    /*
     let min_start = stones.iter().map(|v| v.0).min().expect("a min");
+    let max_start = stones.iter().map(|v| v.0).max().expect("a min");
+    let min_neg = stones
+        .iter()
+        .filter(|v| v.1 < 0)
+        .map(|v| v.0)
+        .min()
+        .unwrap();
+    let max_neg = stones
+        .iter()
+        .filter(|v| v.1 < 0)
+        .map(|v| v.0)
+        .max()
+        .unwrap();
+    let min_pos = stones
+        .iter()
+        .filter(|v| v.1 > 0)
+        .map(|v| v.0)
+        .min()
+        .unwrap();
+    println!(
+        "min of dim is {min_start}, max is {max_start}, diff is {}; min_neg is {min_neg}, max_neg is {max_neg}, diff is {}; min_pos is {min_pos}",
+        max_start - min_start,
+        max_neg - min_neg,
+    );
+    */
+    for space in 0..1000 {
+        for s1 in 0..stones.len() {
+            for s2 in (s1 + 1)..stones.len() {
+                for n in 1..100 {
+                    let y1 = stones[s1].0 + stones[s1].1 * space;
+                    let y2 = stones[s2].0 + stones[s2].1 * (space + n);
+                    if (y2 - y1) % (space + n) != 0 {
+                        continue;
+                    }
+                    let v = (y2 - y1) / (space + n);
+                    let stone = Stone {
+                        pos: Pos { x: 0, y: y2, z: 0 },
+                        speed: Pos { x: 1, y: v, z: 0 },
+                    };
+                    // Does d intersect the net point at an integer coordinate ?
+                    let mut found = true;
+                    for s3 in (s2 + 1)..stones.len() {
+                        let stone2 = Stone {
+                            pos: Pos {
+                                x: 0,
+                                y: stones[s3].0,
+                                z: 0,
+                            },
+                            speed: Pos {
+                                x: 1,
+                                y: stones[s3].1,
+                                z: 0,
+                            },
+                        };
+                        if let Some((xi, yi)) = stone.intersect_pos_2d(&stone2) {
+                            if xi.fract() > 1e-10 || yi.fract() > 1e-10 {
+                                found = false;
+                                break;
+                            }
+                            println!("{:?} intersects at n={}", stones[s3], yi);
+                        } else {
+                            found = false;
+                            break;
+                        }
+                    }
+                    if found {
+                        println!(
+                            "Found intersection with every other point for vector ({y2}, {v}), n={}", space+n
+                        );
+                        return (y2, v);
+                    }
+                }
+            }
+        }
+    }
+
     (0, 0)
 }
 
