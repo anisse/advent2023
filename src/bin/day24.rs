@@ -50,7 +50,7 @@ where
             let a = &stones[i];
             let b = &stones[j];
             if intersect_in_2d((min as f64, max as f64), a, b) {
-                println!("{a:?} intersect {b:?}");
+                //println!("{a:?} intersect {b:?}");
                 count += 1
             }
         }
