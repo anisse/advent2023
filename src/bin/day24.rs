@@ -63,7 +63,7 @@ fn intersect_in_2d(zone: (f64, f64), a: &Stone, b: &Stone) -> bool {
         if !a.forward_in_time_2d(xi, yi) || !b.forward_in_time_2d(xi, yi) {
             return false;
         }
-        if xi < zone.0 || xi > zone.1 || yi < zone.0 || xi > zone.1 {
+        if xi < zone.0 || xi > zone.1 || yi < zone.0 || yi > zone.1 {
             return false;
         }
         return true;
