@@ -232,10 +232,36 @@ fn part2<I>(things: I) -> usize
 where
     I: Iterator<Item = ParsedItem>,
 {
-    for _ in things {
-        todo!()
-    }
-    42
+    let stones: Vec<_> = things.collect();
+    let dim_x: Vec<Dim> = stones.iter().map(|s| (s.pos.x, s.speed.x)).collect();
+    let dim_y: Vec<Dim> = stones.iter().map(|s| (s.pos.y, s.speed.y)).collect();
+    let dim_z: Vec<Dim> = stones.iter().map(|s| (s.pos.z, s.speed.z)).collect();
+    let (x, _) = cross_dim(&dim_x);
+    let (y, _) = cross_dim(&dim_y);
+    let (z, _) = cross_dim(&dim_z);
+    (x + y + z) as usize
+}
+
+// 1-dimensionnal vectors
+type Dim = (i64, i64);
+
+fn cross_dim(stones: &[Dim]) -> (i64, i64) {
+    let min_start = stones.iter().map(|v| v.0).min().expect("a min");
+    (0, 0)
+}
+
+#[test]
+fn test_cross() {
+    let stones: Vec<_> = parse(sample!()).collect();
+    let dim_x: Vec<Dim> = stones.iter().map(|s| (s.pos.x, s.speed.x)).collect();
+    let dim_y: Vec<Dim> = stones.iter().map(|s| (s.pos.y, s.speed.y)).collect();
+    let dim_z: Vec<Dim> = stones.iter().map(|s| (s.pos.z, s.speed.z)).collect();
+    let vx = cross_dim(&dim_x);
+    let vy = cross_dim(&dim_y);
+    let vz = cross_dim(&dim_z);
+    assert_eq!(vx, (24, -3));
+    assert_eq!(vy, (13, 1));
+    assert_eq!(vz, (10, 2));
 }
 
 #[test]
@@ -245,6 +271,6 @@ fn test() {
     let res = part1(things.clone(), 7, 27);
     assert_eq!(res, 2);
     //part 2
-    //let res = part2(things);
-    //assert_eq!(res, 42);
+    let res = part2(things);
+    assert_eq!(res, 47);
 }
