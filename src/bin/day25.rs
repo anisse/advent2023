@@ -41,8 +41,8 @@ where
     let keys: Vec<String> = map.keys().cloned().collect();
     for k in keys.into_iter() {
         if let Some(next) = map.get(&k).cloned() {
-            for n in next.iter() {
-                map.entry(n.clone()).or_default().insert(k.clone());
+            for n in next.into_iter() {
+                map.entry(n).or_default().insert(k.clone());
             }
         }
     }
