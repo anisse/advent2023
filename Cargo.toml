@@ -6,7 +6,8 @@ edition = "2021"
 
 [dependencies]
 itertools = "0.12.0"
-#scan_fmt = "0.2.6"
+#z3 = { version = "0.12.1", features = ["static-link-z3"] } # cannot find z3.h in fedora
+z3 = "0.12.1"
 
 [features]
 ci_no_input = []

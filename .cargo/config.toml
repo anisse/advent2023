@@ -1,0 +1,3 @@
+[env]
+Z3_SYS_Z3_HEADER="/usr/include/z3/z3.h" # fedora thing, no idea if it will work for you
+

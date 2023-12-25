@@ -1,5 +1,10 @@
 use advent2023::*;
 use itertools::Itertools;
+use z3::{
+    ast::{Ast, Int},
+    Config, Context, SatResult, Solver,
+};
+
 fn main() {
     let things = parse(input!());
     //part 1
@@ -234,8 +239,56 @@ where
     I: Iterator<Item = ParsedItem>,
 {
     let stones: Vec<_> = things.collect();
+    /*
     let d = part2_bruteforce(&stones);
     (d[0].0 + d[1].0 + d[2].0) as usize
+    */
+    part2_z3(&stones)
+}
+fn part2_z3(stones: &[Stone]) -> usize {
+    let ctx = &Context::new(&Config::default());
+    let solver = Solver::new(ctx);
+    let x = Int::new_const(ctx, "x");
+    let y = Int::new_const(ctx, "y");
+    let z = Int::new_const(ctx, "z");
+    let vx = Int::new_const(ctx, "vx");
+    let vy = Int::new_const(ctx, "vy");
+    let vz = Int::new_const(ctx, "vz");
+    let nlist: Vec<_> = (0..stones.len())
+        .map(|i| Int::new_const(ctx, format!("t{i}")))
+        .collect();
+
+    let toi64 = move |i| Int::from_i64(ctx, i);
+    stones.iter().zip(nlist.iter()).for_each(|(s, n)| {
+        let ux = Int::add(ctx, &[&x, &Int::mul(ctx, &[&vx, &n])]);
+        let nx = Int::add(
+            ctx,
+            &[&toi64(s.pos.x), &Int::mul(ctx, &[&toi64(s.speed.x), &n])],
+        );
+        solver.assert(&ux._eq(&nx));
+
+        let uy = Int::add(ctx, &[&y, &Int::mul(ctx, &[&vy, &n])]);
+        let ny = Int::add(
+            ctx,
+            &[&toi64(s.pos.y), &Int::mul(ctx, &[&toi64(s.speed.y), &n])],
+        );
+        solver.assert(&uy._eq(&ny));
+
+        let uz = Int::add(ctx, &[&z, &Int::mul(ctx, &[&vz, &n])]);
+        let nz = Int::add(
+            ctx,
+            &[&toi64(s.pos.z), &Int::mul(ctx, &[&toi64(s.speed.z), &n])],
+        );
+        solver.assert(&uz._eq(&nz));
+    });
+
+    assert_eq!(SatResult::Sat, solver.check());
+    let model = solver.get_model().unwrap();
+    let xsol = model.eval(&x, true).unwrap().as_i64().unwrap();
+    let ysol = model.eval(&y, true).unwrap().as_i64().unwrap();
+    let zsol = model.eval(&z, true).unwrap().as_i64().unwrap();
+
+    (xsol + ysol + zsol) as usize
 }
 fn part2_bruteforce(stones: &[Stone]) -> [Dim; 3] {
     /*
