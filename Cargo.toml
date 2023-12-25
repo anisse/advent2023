@@ -6,7 +6,7 @@ edition = "2021"
 
 [dependencies]
 itertools = "0.12.0"
-z3 = { version = "0.12.1", features = ["static-link-z3"] } # cannot find z3.h in fedora
+z3 = { version = "0.12.1", features = ["static-link-z3"] }# cannot find z3.h in fedora
 #z3 = "0.12.1"
 
 [features]
