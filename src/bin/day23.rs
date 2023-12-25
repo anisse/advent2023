@@ -1,14 +1,14 @@
-use std::{collections::HashSet, thread};
+use std::collections::HashSet;
 
 use advent2023::*;
 fn main() {
     let map = parse(input!());
     //part 1
     let res = part1(&map);
-    println!("Part 1: {}", res);
+    // println!("Part 1: {}", res);
     //part 2
     let res = part2(&map);
-    println!("Part 2: {}", res);
+    //println!("Part 2: {}", res);
 }
 type Map = Vec<Vec<u8>>;
 type MapRef<'a> = &'a [Vec<u8>];
@@ -73,56 +73,122 @@ fn part2(map: MapRef) -> usize {
         .position(|c| *c == b'.')
         .expect("end pos") as u16;
 
-    let map = map.to_vec();
-    // Needs a bigger stack
-    let child = thread::Builder::new()
-        .stack_size(4 * 1024 * 1024) // this is mostly for debug mode with full input
-        .spawn(move || {
-            longest_path2_bruteforce(
-                &map,
-                (start_x, 0),
-                (end_x, map.len() as u16 - 1),
-                &mut vec![vec![false; map[0].len()]; map.len()],
-                0,
-            )
-        })
-        .unwrap();
+    let g = build_graph(map, (start_x, 0), (end_x, map.len() as u16 - 1));
+    g._print_dot();
 
-    child.join().unwrap()
+    0
 }
 
-fn longest_path2_bruteforce(
-    map: MapRef,
-    pos: Pos,
-    end: Pos,
-    seen: &mut [Vec<bool>],
-    cur: u16,
-) -> usize {
-    if pos == end {
-        return cur as usize;
+#[derive(Debug, Default)]
+struct Edge {
+    next: usize,
+    weight: usize,
+}
+type Edges = [Option<Edge>; 4];
+#[derive(Debug, Default)]
+struct Graph {
+    names: Vec<u32>,
+    edges: Vec<Edges>,
+}
+impl Graph {
+    fn node_id(&mut self, node: Pos) -> usize {
+        self.names
+            .iter()
+            .position(|s| *s == coord_to_name(node))
+            .unwrap_or_else(|| {
+                self.names.push(coord_to_name(node));
+                self.edges.push(Default::default());
+                self.names.len() - 1
+            })
     }
-    let ipos = (pos.0 as i16, pos.1 as i16);
-    let mut max = 0;
-    for d in [(0, 1), (0, -1), (1, 0), (-1, 0)].into_iter() {
-        let inext = (ipos.0 + d.0, ipos.1 + d.1);
-        let next = (inext.0 as usize, inext.1 as usize);
-        if inext.0 < 0 || next.0 >= map[0].len() || inext.1 < 0 || next.1 >= map.len() {
-            continue;
+    fn _print_dot(&self) {
+        println!("strict graph {{");
+        for (i, name) in self.names.iter().enumerate() {
+            for edge in self.edges[i].iter().flatten() {
+                println!(
+                    "\"{:?}\" -- \"{:?}\" [label={}]",
+                    name_to_coord(*name),
+                    name_to_coord(self.names[edge.next]),
+                    edge.weight
+                );
+            }
         }
-        if map[next.1][next.0] == b'#' {
-            continue;
+        println!("}}");
+    }
+}
+fn build_graph(map: MapRef, start: Pos, end: Pos) -> Graph {
+    let mut graph = Graph::default();
+    let mut queue = vec![];
+    let mut seen = vec![vec![false; map[0].len()]; map.len()];
+    queue.push(start);
+    while let Some(pos) = queue.pop() {
+        let mut i = 0;
+        let mut conns = Edges::default();
+        seen[pos.1 as usize][pos.0 as usize] = true;
+        for next in adj(map, pos) {
+            let (next, weight, dead_end) = next_compress(map, pos, next);
+            if dead_end && next != end {
+                //println!("Dead end edge {pos:?} skipped");
+                continue;
+            }
+            conns[i] = Some(Edge {
+                next: graph.node_id(next),
+                weight,
+            });
+            i += 1;
+            if !seen[next.1 as usize][next.0 as usize] {
+                queue.push(next);
+            }
         }
-        if seen[next.1][next.0] {
-            continue;
-        }
-        seen[next.1][next.0] = true;
-        let len = longest_path2_bruteforce(map, (next.0 as u16, next.1 as u16), end, seen, cur + 1);
-        seen[next.1][next.0] = false;
-        if len > max {
-            max = len;
+        let id = graph.node_id(pos);
+        graph.edges[id] = conns;
+    }
+    graph
+}
+
+fn adj(map: MapRef, pos: Pos) -> impl Iterator<Item = Pos> + '_ {
+    [(0, 1), (0, -1), (1, 0), (-1, 0)]
+        .into_iter()
+        .flat_map(move |d| {
+            // inline iterator
+            let ipos = (pos.0 as isize, pos.1 as isize);
+            let inext = (ipos.0 + d.0, ipos.1 + d.1);
+            let next = (inext.0 as usize, inext.1 as usize);
+            if inext.0 < 0 || next.0 >= map[0].len() || inext.1 < 0 || next.1 >= map.len() {
+                return None;
+            }
+            if map[next.1][next.0] == b'#' {
+                return None;
+            }
+            Some((next.0 as u16, next.1 as u16))
+        })
+}
+fn next_compress(map: MapRef, mut prev: Pos, mut next: Pos) -> (Pos, usize, bool) {
+    let mut weight = 1;
+    loop {
+        let edges: Vec<_> = adj(map, next).collect();
+        match edges.len() {
+            2 => {
+                let ni = if edges[0] == prev { 1 } else { 0 };
+                prev = next;
+                next = edges[ni];
+                weight += 1;
+            }
+            1 => {
+                // dead end
+                //
+                return (next, weight, true);
+            }
+            _ => return (next, weight, false),
         }
     }
-    max
+}
+
+fn coord_to_name(pos: Pos) -> u32 {
+    pos.0 as u32 | (pos.1 as u32) << 16
+}
+fn name_to_coord(name: u32) -> Pos {
+    ((name & 0xFFFF) as u16, (name >> 16) as u16)
 }
 
 fn _print_map(map: MapRef, current_path: &mut HashSet<Pos>) {
