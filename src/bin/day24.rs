@@ -233,112 +233,130 @@ where
     I: Iterator<Item = ParsedItem>,
 {
     let stones: Vec<_> = things.collect();
-    let dim_x: Vec<Dim> = stones.iter().map(|s| (s.pos.x, s.speed.x)).collect();
-    let dim_y: Vec<Dim> = stones.iter().map(|s| (s.pos.y, s.speed.y)).collect();
-    let dim_z: Vec<Dim> = stones.iter().map(|s| (s.pos.z, s.speed.z)).collect();
-    let (x, _) = cross_dim(&dim_x);
-    let (y, _) = cross_dim(&dim_y);
-    let (z, _) = cross_dim(&dim_z);
-    (x + y + z) as usize
+    let dims: Vec<[Dim; 3]> = stones
+        .iter()
+        .map(|s| {
+            [
+                (s.pos.x, s.speed.x),
+                (s.pos.y, s.speed.y),
+                (s.pos.z, s.speed.z),
+            ]
+        })
+        .collect();
+    let d = cross_dim(&dims);
+    (d[0].0 + d[1].0 + d[2].0) as usize
 }
 
 // 1-dimensionnal vectors
 type Dim = (i64, i64);
 
-fn cross_dim(stones: &[Dim]) -> (i64, i64) {
-    /*
-    let min_start = stones.iter().map(|v| v.0).min().expect("a min");
-    let max_start = stones.iter().map(|v| v.0).max().expect("a min");
-    let min_neg = stones
-        .iter()
-        .filter(|v| v.1 < 0)
-        .map(|v| v.0)
-        .min()
-        .unwrap();
-    let max_neg = stones
-        .iter()
-        .filter(|v| v.1 < 0)
-        .map(|v| v.0)
-        .max()
-        .unwrap();
-    let min_pos = stones
-        .iter()
-        .filter(|v| v.1 > 0)
-        .map(|v| v.0)
-        .min()
-        .unwrap();
-    println!(
-        "min of dim is {min_start}, max is {max_start}, diff is {}; min_neg is {min_neg}, max_neg is {max_neg}, diff is {}; min_pos is {min_pos}",
-        max_start - min_start,
-        max_neg - min_neg,
-    );
-    */
-    for space in 0..1000 {
+fn cross_dim(stones: &[[Dim; 3]]) -> [Dim; 3] {
+    let mut ret: [Dim; 3] = Default::default();
+    for x1 in 0..2000 {
         for s1 in 0..stones.len() {
             for s2 in (s1 + 1)..stones.len() {
-                for n in 1..100 {
-                    let y1 = stones[s1].0 + stones[s1].1 * space;
-                    let y2 = stones[s2].0 + stones[s2].1 * (space + n);
-                    if (y2 - y1) % (space + n) != 0 {
-                        continue;
-                    }
-                    let v = (y2 - y1) / (space + n);
-                    let stone = Stone {
-                        pos: Pos { x: 0, y: y2, z: 0 },
-                        speed: Pos { x: 1, y: v, z: 0 },
-                    };
-                    // Does d intersect the net point at an integer coordinate ?
-                    let mut found = true;
-                    for s3 in (s2 + 1)..stones.len() {
-                        let stone2 = Stone {
+                'n_selection: for n in 1..2000 {
+                    let mut found = false;
+                    // are Xi all the same ?
+                    let mut xi0 = 0.0;
+                    'dim_selection: for d in 0..3 {
+                        let y1 = stones[s1][d].0 + stones[s1][d].1 * x1;
+                        let y2 = stones[s2][d].0 + stones[s2][d].1 * (x1 + n);
+                        if (y2 - y1) % n != 0 {
+                            continue 'n_selection;
+                        }
+                        let v = (y2 - y1) / n;
+                        let start = y1 - v * x1;
+                        //assert_eq!(start, y2 - v * (x1 + n));
+                        let stone = Stone {
                             pos: Pos {
                                 x: 0,
-                                y: stones[s3].0,
+                                y: start,
                                 z: 0,
                             },
-                            speed: Pos {
-                                x: 1,
-                                y: stones[s3].1,
-                                z: 0,
-                            },
+                            speed: Pos { x: 1, y: v, z: 0 },
                         };
-                        if let Some((xi, yi)) = stone.intersect_pos_2d(&stone2) {
-                            if xi.fract() > 1e-10 || yi.fract() > 1e-10 {
+                        // Does d intersect the net point at an integer coordinate ?
+                        for s3 in (s2 + 1)..stones.len() {
+                            let stone2 = Stone {
+                                pos: Pos {
+                                    x: 0,
+                                    y: stones[s3][d].0,
+                                    z: 0,
+                                },
+                                speed: Pos {
+                                    x: 1,
+                                    y: stones[s3][d].1,
+                                    z: 0,
+                                },
+                            };
+                            if let Some((xi, yi)) = stone.intersect_pos_2d(&stone2) {
+                                if !stone.forward_in_time_2d(xi, yi)
+                                    || !stone2.forward_in_time_2d(xi, yi)
+                                {
+                                    found = false;
+                                    break 'dim_selection;
+                                }
+                                if xi.fract() > 1e-10 || yi.fract() > 1e-10 {
+                                    found = false;
+                                    break 'dim_selection;
+                                }
+                                if d == 0 {
+                                    xi0 = xi;
+                                } else if (xi0 - xi).abs() > 1e-10 {
+                                    found = false;
+                                    break 'dim_selection;
+                                }
+                                found = true;
+                                println!(
+                                    "{:?} at {x1} and {:?} at {}, {:?} intersects at n={}",
+                                    stones[s1],
+                                    stones[s2],
+                                    x1 + n,
+                                    stones[s3],
+                                    xi
+                                );
+                            } else {
                                 found = false;
-                                break;
+                                break 'dim_selection;
                             }
-                            println!("{:?} intersects at n={}", stones[s3], yi);
-                        } else {
-                            found = false;
-                            break;
+                        }
+                        if found {
+                            ret[d] = (start, v);
                         }
                     }
                     if found {
                         println!(
-                            "Found intersection with every other point for vector ({y2}, {v}), n={}", space+n
+                            "Found intersection with every other point for vectors ({ret:?}, n={}",
+                            x1 + n
                         );
-                        return (y2, v);
+                        return ret;
                     }
                 }
             }
         }
     }
 
-    (0, 0)
+    [(0, 0), (0, 0), (0, 0)]
 }
 
 #[test]
 fn test_cross() {
     let stones: Vec<_> = parse(sample!()).collect();
-    let dim_x: Vec<Dim> = stones.iter().map(|s| (s.pos.x, s.speed.x)).collect();
-    let dim_y: Vec<Dim> = stones.iter().map(|s| (s.pos.y, s.speed.y)).collect();
-    let dim_z: Vec<Dim> = stones.iter().map(|s| (s.pos.z, s.speed.z)).collect();
-    let vx = cross_dim(&dim_x);
-    let vy = cross_dim(&dim_y);
-    let vz = cross_dim(&dim_z);
-    assert_eq!(vx, (24, -3));
-    assert_eq!(vy, (13, 1));
-    assert_eq!(vz, (10, 2));
+    let dims: Vec<[Dim; 3]> = stones
+        .iter()
+        .map(|s| {
+            [
+                (s.pos.x, s.speed.x),
+                (s.pos.y, s.speed.y),
+                (s.pos.z, s.speed.z),
+            ]
+        })
+        .collect();
+    let d = cross_dim(&dims);
+    assert_eq!(d[0], (24, -3));
+    assert_eq!(d[1], (13, 1));
+    assert_eq!(d[2], (10, 2));
 }
 
 #[test]
