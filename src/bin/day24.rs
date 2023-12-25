@@ -286,12 +286,11 @@ type Dim = (i64, i64);
 fn cross_dim(stones: &[[Dim; 3]]) -> [Dim; 3] {
     let mut ret: [Dim; 3] = Default::default();
     let mut xi0 = vec![0.0; stones.len()];
-    for x1 in 0..1000 {
+    for x1 in 0..9000 {
         for s1 in 0..stones.len() {
             for s2 in (s1 + 1)..stones.len() {
                 'n_selection: for n in 1..1000 {
                     let mut found = false;
-                    // are Xi all the same ?
                     'dim_selection: for d in 0..3 {
                         let y1 = stones[s1][d].0 + stones[s1][d].1 * x1;
                         let y2 = stones[s2][d].0 + stones[s2][d].1 * (x1 + n);
@@ -337,14 +336,10 @@ fn cross_dim(stones: &[[Dim; 3]]) -> [Dim; 3] {
                                     found = false;
                                     break 'dim_selection;
                                 }
-                                /*
-                                if d == 0 && start == 24 && v == -3 {
-                                    println!("not integer {d} {xi} ==? {xi0}");
-                                }
-                                */
                                 if d == 0 {
                                     xi0[s3] = xi;
                                 } else if (xi0[s3] - xi).abs() > 1e-10 {
+                                    // are Xi all the same ?
                                     found = false;
                                     break 'dim_selection;
                                 }
