@@ -1,4 +1,5 @@
 use advent2023::*;
+use itertools::Itertools;
 fn main() {
     let things = parse(input!());
     //part 1
@@ -233,6 +234,11 @@ where
     I: Iterator<Item = ParsedItem>,
 {
     let stones: Vec<_> = things.collect();
+    let d = part2_bruteforce(&stones);
+    (d[0].0 + d[1].0 + d[2].0) as usize
+}
+fn part2_bruteforce(stones: &[Stone]) -> [Dim; 3] {
+    /*
     let dims: Vec<[Dim; 3]> = stones
         .iter()
         .map(|s| {
@@ -243,8 +249,35 @@ where
             ]
         })
         .collect();
-    let d = cross_dim(&dims);
-    (d[0].0 + d[1].0 + d[2].0) as usize
+    */
+    let dims: Vec<[Dim; 3]> = stones
+        .iter()
+        .map(|s| {
+            (
+                stones
+                    .iter()
+                    .map(|s2| {
+                        // manhattan dist
+                        (s.pos.x - s2.pos.x).abs()
+                            + (s.pos.y - s2.pos.y).abs()
+                            + (s.pos.z - s2.pos.z).abs()
+                    })
+                    .sum::<i64>(),
+                [
+                    (s.pos.x, s.speed.x),
+                    (s.pos.y, s.speed.y),
+                    (s.pos.z, s.speed.z),
+                ],
+            )
+        })
+        // Sort stones by "centrality": distances to all other stones
+        // the idea being that they are the closest to colliding to others
+        //.inspect(|(a, b)| println!("{b:?}: {a}"))
+        .sorted()
+        //.inspect(|(a, b)| println!("sorted {b:?}: {a}"))
+        .map(|(_, b)| b)
+        .collect();
+    cross_dim(&dims)
 }
 
 // 1-dimensionnal vectors
@@ -252,13 +285,13 @@ type Dim = (i64, i64);
 
 fn cross_dim(stones: &[[Dim; 3]]) -> [Dim; 3] {
     let mut ret: [Dim; 3] = Default::default();
-    for x1 in 0..2000 {
+    let mut xi0 = vec![0.0; stones.len()];
+    for x1 in 0..1000 {
         for s1 in 0..stones.len() {
             for s2 in (s1 + 1)..stones.len() {
-                'n_selection: for n in 1..2000 {
+                'n_selection: for n in 1..1000 {
                     let mut found = false;
                     // are Xi all the same ?
-                    let mut xi0 = 0.0;
                     'dim_selection: for d in 0..3 {
                         let y1 = stones[s1][d].0 + stones[s1][d].1 * x1;
                         let y2 = stones[s2][d].0 + stones[s2][d].1 * (x1 + n);
@@ -277,7 +310,10 @@ fn cross_dim(stones: &[[Dim; 3]]) -> [Dim; 3] {
                             speed: Pos { x: 1, y: v, z: 0 },
                         };
                         // Does d intersect the net point at an integer coordinate ?
-                        for s3 in (s2 + 1)..stones.len() {
+                        for s3 in 0..stones.len() {
+                            if s3 == s2 || s3 == s1 {
+                                continue;
+                            }
                             let stone2 = Stone {
                                 pos: Pos {
                                     x: 0,
@@ -301,9 +337,14 @@ fn cross_dim(stones: &[[Dim; 3]]) -> [Dim; 3] {
                                     found = false;
                                     break 'dim_selection;
                                 }
+                                /*
+                                if d == 0 && start == 24 && v == -3 {
+                                    println!("not integer {d} {xi} ==? {xi0}");
+                                }
+                                */
                                 if d == 0 {
-                                    xi0 = xi;
-                                } else if (xi0 - xi).abs() > 1e-10 {
+                                    xi0[s3] = xi;
+                                } else if (xi0[s3] - xi).abs() > 1e-10 {
                                     found = false;
                                     break 'dim_selection;
                                 }
@@ -317,10 +358,14 @@ fn cross_dim(stones: &[[Dim; 3]]) -> [Dim; 3] {
                                     xi
                                 );
                             } else {
+                                if d == 0 && start == 24 && v == -3 {
+                                    println!("does not intersects");
+                                }
                                 found = false;
                                 break 'dim_selection;
                             }
                         }
+                        println!("After other stones: {found}");
                         if found {
                             ret[d] = (start, v);
                         }
@@ -343,17 +388,7 @@ fn cross_dim(stones: &[[Dim; 3]]) -> [Dim; 3] {
 #[test]
 fn test_cross() {
     let stones: Vec<_> = parse(sample!()).collect();
-    let dims: Vec<[Dim; 3]> = stones
-        .iter()
-        .map(|s| {
-            [
-                (s.pos.x, s.speed.x),
-                (s.pos.y, s.speed.y),
-                (s.pos.z, s.speed.z),
-            ]
-        })
-        .collect();
-    let d = cross_dim(&dims);
+    let d = part2_bruteforce(&stones);
     assert_eq!(d[0], (24, -3));
     assert_eq!(d[1], (13, 1));
     assert_eq!(d[2], (10, 2));
