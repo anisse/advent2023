@@ -5,10 +5,10 @@ fn main() {
     let map = parse(input!());
     //part 1
     let res = part1(&map);
-    // println!("Part 1: {}", res);
+    println!("Part 1: {}", res);
     //part 2
     let res = part2(&map);
-    //println!("Part 2: {}", res);
+    println!("Part 2: {}", res);
 }
 type Map = Vec<Vec<u8>>;
 type MapRef<'a> = &'a [Vec<u8>];
@@ -74,15 +74,14 @@ fn part2(map: MapRef) -> usize {
         .expect("end pos") as u16;
 
     let g = build_graph(map, (start_x, 0), (end_x, map.len() as u16 - 1));
-    g._print_dot();
-
-    0
+    //g._print_dot();
+    g.longest_path((start_x, 0), (end_x, map.len() as u16 - 1))
 }
 
 #[derive(Debug, Default)]
 struct Edge {
     next: usize,
-    weight: usize,
+    weight: u16,
 }
 type Edges = [Option<Edge>; 4];
 #[derive(Debug, Default)]
@@ -91,15 +90,29 @@ struct Graph {
     edges: Vec<Edges>,
 }
 impl Graph {
+    fn coord_to_name(pos: Pos) -> u32 {
+        pos.0 as u32 | (pos.1 as u32) << 16
+    }
+    fn _name_to_coord(name: u32) -> Pos {
+        ((name & 0xFFFF) as u16, (name >> 16) as u16)
+    }
+
     fn node_id(&mut self, node: Pos) -> usize {
         self.names
             .iter()
-            .position(|s| *s == coord_to_name(node))
+            .position(|s| *s == Self::coord_to_name(node))
             .unwrap_or_else(|| {
-                self.names.push(coord_to_name(node));
+                self.names.push(Self::coord_to_name(node));
                 self.edges.push(Default::default());
                 self.names.len() - 1
             })
+    }
+    // can panic
+    fn existing_node_id(&self, node: Pos) -> usize {
+        self.names
+            .iter()
+            .position(|s| *s == Self::coord_to_name(node))
+            .unwrap()
     }
     fn _print_dot(&self) {
         println!("strict graph {{");
@@ -107,13 +120,40 @@ impl Graph {
             for edge in self.edges[i].iter().flatten() {
                 println!(
                     "\"{:?}\" -- \"{:?}\" [label={}]",
-                    name_to_coord(*name),
-                    name_to_coord(self.names[edge.next]),
+                    Self::_name_to_coord(*name),
+                    Self::_name_to_coord(self.names[edge.next]),
                     edge.weight
                 );
             }
         }
         println!("}}");
+    }
+    fn longest_path(&self, start: Pos, end: Pos) -> usize {
+        let mut seen = vec![false; self.edges.len()];
+        self.longest_path_inner(
+            self.existing_node_id(start),
+            self.existing_node_id(end),
+            &mut seen,
+            0,
+        )
+    }
+    fn longest_path_inner(&self, pos: usize, end: usize, seen: &mut [bool], cur: u16) -> usize {
+        if pos == end {
+            return cur as usize;
+        }
+        let mut max = 0;
+        for next in self.edges[pos].iter().flatten() {
+            if seen[next.next] {
+                continue;
+            }
+            seen[next.next] = true;
+            let len = self.longest_path_inner(next.next, end, seen, cur + next.weight);
+            seen[next.next] = false;
+            if len > max {
+                max = len;
+            }
+        }
+        max
     }
 }
 fn build_graph(map: MapRef, start: Pos, end: Pos) -> Graph {
@@ -163,7 +203,7 @@ fn adj(map: MapRef, pos: Pos) -> impl Iterator<Item = Pos> + '_ {
             Some((next.0 as u16, next.1 as u16))
         })
 }
-fn next_compress(map: MapRef, mut prev: Pos, mut next: Pos) -> (Pos, usize, bool) {
+fn next_compress(map: MapRef, mut prev: Pos, mut next: Pos) -> (Pos, u16, bool) {
     let mut weight = 1;
     loop {
         let edges: Vec<_> = adj(map, next).collect();
@@ -182,13 +222,6 @@ fn next_compress(map: MapRef, mut prev: Pos, mut next: Pos) -> (Pos, usize, bool
             _ => return (next, weight, false),
         }
     }
-}
-
-fn coord_to_name(pos: Pos) -> u32 {
-    pos.0 as u32 | (pos.1 as u32) << 16
-}
-fn name_to_coord(name: u32) -> Pos {
-    ((name & 0xFFFF) as u16, (name >> 16) as u16)
 }
 
 fn _print_map(map: MapRef, current_path: &mut HashSet<Pos>) {
